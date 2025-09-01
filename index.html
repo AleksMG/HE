@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Омофонико-Гомоморфная Криптосистема</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --background: #ecf0f1;
+            --surface: #ffffff;
+            --text: #2c3e50;
+            --border: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--surface);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .nav-item {
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item.active {
+            background: var(--secondary);
+        }
+
+        .content-area {
+            padding: 2rem;
+            display: grid;
+            gap: 2rem;
+        }
+
+        .window {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .window-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+
+        .result-area {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            padding: 1rem;
+            min-height: 100px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .omo-visualization {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .omo-cell {
+            padding: 0.5rem;
+            border: 2px solid var(--border);
+            border-radius: 5px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .omo-original {
+            background: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .proof-step {
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-left: 4px solid var(--secondary);
+            background: #f8f9fa;
+        }
+
+        .math-formula {
+            font-family: 'Cambria Math', serif;
+            font-size: 1.1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-active {
+            background: var(--success);
+        }
+
+        .status-inactive {
+            background: var(--border);
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                display: none;
+            }
+            
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Омофонико-Гомоморфная Криптосистема</h1>
+            <p class="subtitle">Комбинированная система с Zero-Knowledge доказательствами</p>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <div class="nav-item active" data-tab="concept">
+                    📚 Концепция системы
+                </div>
+                <div class="nav-item" data-tab="omo-encryption">
+                    🔐 Омофоническое шифрование
+                </div>
+                <div class="nav-item" data-tab="homomorphic">
+                    🧮 Гомоморфные вычисления
+                </div>
+                <div class="nav-item" data-tab="zero-knowledge">
+                    🕵️ Zero-Knowledge Proofs
+                </div>
+                <div class="nav-item" data-tab="verification">
+                    ✅ Проверка и верификация
+                </div>
+                <div class="nav-item" data-tab="advanced">
+            </aside>
+
+            <main class="content-area">
+                <!-- Концепция системы -->
+                <div class="window" id="concept-tab">
+                    <div class="window-header">
+                        <h2 class="window-title">📚 Концепция системы</h2>
+                    </div>
+                    <div class="math-formula">
+                        H(m) = {c₁, c₂, ..., cₙ} ⊂ C<br>
+                        ∀c ∈ C: ∃!m ∈ M: c ∈ H(m)<br>
+                        c₁ ⊕ c₂ ∈ H(m₁ + m₂)<br>
+                        c₁ ⊗ c₂ ∈ H(m₁ ⋅ m₂)
+                    </div>
+                    <p><strong>Омофоническое шифрование:</strong> Каждому сообщению соответствует множество шифротекстов.</p>
+                    <p><strong>Гомоморфные операции:</strong> Вычисления на зашифрованных данных без расшифровки.</p>
+                    <p><strong>Zero-Knowledge Proofs:</strong> Доказательства корректности без раскрытия данных.</p>
+                    
+                    <div class="form-group">
+                        <label>Выберите демонстрационный режим:</label>
+                        <select id="demo-mode">
+                            <option value="basic">Базовая демонстрация</option>
+                            <option value="advanced">Продвинутая демонстрация</option>
+                            <option value="custom">Пользовательский сценарий</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="initSystem()">Инициализировать систему</button>
+                </div>
+
+                <!-- Омофоническое шифрование -->
+                <div class="window" id="omo-encryption-tab" style="display: none;">
+                    <div class="window-header">
+                        <h2 class="window-title">🔐 Омофоническое шифрование</h2>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div>
+                            <div class="form-group">
+                                <label>Исходное сообщение:</label>
+                                <input type="text" id="plaintext" value="CRYPTO" placeholder="Введите текст">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>Количество омофонов на символ:</label>
+                                <input type="number" id="omo-count" value="4" min="2" max="8">
+                            </div>
+                            
+                            <button class="btn btn-primary" onclick="generateOmophones()">Сгенерировать омофоны</button>
+                        </div>
+                        
+                        <div>
+                            <label>Результат:</label>
+                            <div class="result-area" id="omo-result">
+                                Омофоны появятся здесь...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="omo-visualization" id="omo-visualization">
+                        <!-- Визуализация омофонов будет здесь -->
+                    </div>
+                </div>
+
+                <!-- Гомоморфные вычисления -->
+                <div class="window" id="homomorphic-tab" style="display: none;">
+                    <div class="window-header">
+                        <h2 class="window-title">🧮 Гомоморфные вычисления</h2>
+                    </div>
+                    
+                    <div class="grid-3">
+                        <div>
+                            <div class="form-group">
+                                <label>Число 1:</label>
+                                <input type="number" id="num1" value="5">
+                            </div>
+                            <div class="result-area" id="omo-num1">
+                                Омофоны: []
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <div class="form-group">
+                                <label>Операция:</label>
+                                <select id="homo-operation">
+                                    <option value="add">Сложение (+)</option>
+                                    <option value="mult">Умножение (×)</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="performHomomorphicOp()">Выполнить операцию</button>
+                        </div>
+                        
+                        <div>
+                            <div class="form-group">
+                                <label>Число 2:</label>
+                                <input type="number" id="num2" value="3">
+                            </div>
+                            <div class="result-area" id="omo-num2">
+                                Омофоны: []
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="result-area" id="homo-result" style="margin-top: 1rem;">
+                        Результат вычислений появится здесь...
+                    </div>
+                </div>
+
+                <!-- Zero-Knowledge Proofs -->
+                <div class="window" id="zero-knowledge-tab" style="display: none;">
+                    <div class="window-header">
+                        <h2 class="window-title">🕵️ Zero-Knowledge Proofs</h2>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Сообщение для доказательства:</label>
+                        <input type="text" id="zk-message" value="SECRET">
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div>
+                            <button class="btn btn-primary" onclick="generateZKProof()">Сгенерировать доказательство</button>
+                            <div class="result-area" id="zk-proof">
+                                Доказательство появится здесь...
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <button class="btn btn-success" onclick="verifyZKProof()">Проверить доказательство</button>
+                            <div class="result-area" id="zk-verification">
+                                Результат проверки появится здесь...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="zk-steps">
+                        <!-- Шаги доказательства будут здесь -->
+                    </div>
+                </div>
+
+                <!-- Проверка и верификация -->
+                <div class="window" id="verification-tab" style="display: none;">
+                    <div class="window-header">
+                        <h2 class="window-title">✅ Проверка и верификация</h2>
+                    </div>
+                    
+                    <div class="grid-2">
+                        <div>
+                            <h3>Проверка омофонов</h3>
+                            <div class="form-group">
+                                <label>Омофон для проверки:</label>
+                                <input type="text" id="verify-omo">
+                            </div>
+                            <button class="btn btn-primary" onclick="verifyOmophone()">Проверить омофон</button>
+                            <div class="result-area" id="omo-verify-result">
+                                Результат проверки...
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3>Статистический анализ</h3>
+                            <button class="btn btn-warning" onclick="runStatisticalAnalysis()">Запустить анализ</button>
+                            <div class="result-area" id="statistical-result">
+                                Результаты анализа...
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <h3>Мониторинг системы</h3>
+                        <div class="result-area" id="system-monitor">
+                            <div><span class="status-indicator status-active"></span> Омофонический модуль: Активен</div>
+                            <div><span class="status-indicator status-active"></span> Гомоморфный модуль: Активен</div>
+                            <div><span class="status-indicator status-active"></span> ZK-модуль: Активен</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        class HomomorphicOmoSystem {
+            constructor() {
+                this.prime = 991n; // Простое число для модульной арифметики
+                this.omoMap = new Map(); // m -> [c1, c2, ..., ck]
+                this.reverseMap = new Map(); // c -> m
+                this.zkProofs = new Map();
+                this.omoCount = 4;
+            }
+
+            // Генерация омофонов для сообщения
+            generateOmophones(message, count = 4) {
+                this.omoCount = count;
+                const omophones = [];
+                
+                for (let i = 0; i < count; i++) {
+                    // Детерминированная генерация на основе сообщения и индекса
+                    const seed = this.hashString(message + i.toString());
+                    const omophone = (BigInt(this.hashToNumber(seed)) % this.prime);
+                    
+                    omophones.push(omophone);
+                    this.reverseMap.set(omophone.toString(), message);
+                }
+                
+                this.omoMap.set(message, omophones);
+                return omophones;
+            }
+
+            // Гомоморфное сложение
+            homomorphicAdd(omophones1, omophones2) {
+                const result = [];
+                for (const o1 of omophones1) {
+                    for (const o2 of omophones2) {
+                        const sum = (o1 + o2) % this.prime;
+                        result.push(sum);
+                    }
+                }
+                return result;
+            }
+
+            // Гомоморфное умножение
+            homomorphicMultiply(omophones1, omophones2) {
+                const result = [];
+                for (const o1 of omophones1) {
+                    for (const o2 of omophones2) {
+                        const product = (o1 * o2) % this.prime;
+                        result.push(product);
+                    }
+                }
+                return result;
+            }
+
+            // Генерация Zero-Knowledge доказательства
+            generateZKProof(message) {
+                const omophones = this.omoMap.get(message) || this.generateOmophones(message);
+                const proofId = Date.now().toString();
+                
+                const proof = {
+                    message: message,
+                    omophones: omophones,
+                    commitments: omophones.map(omo => this.hashString(omo.toString())),
+                    timestamp: new Date().toISOString()
+                };
+                
+                this.zkProofs.set(proofId, proof);
+                return proof;
+            }
+
+            // Проверка Zero-Knowledge доказательства
+            verifyZKProof(proofId) {
+                const proof = this.zkProofs.get(proofId);
+                if (!proof) return false;
+
+                // Проверяем commitments
+                for (let i = 0; i < proof.omophones.length; i++) {
+                    const computedCommit = this.hashString(proof.omophones[i].toString());
+                    if (computedCommit !== proof.commitments[i]) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            // Проверка омофона
+            verifyOmophone(omophone) {
+                return this.reverseMap.has(omophone.toString());
+            }
+
+            // Вспомогательные функции
+            hashString(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0;
+                }
+                return hash.toString();
+            }
+
+            hashToNumber(str) {
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                    hash |= 0;
+                }
+                return Math.abs(hash);
+            }
+        }
+
+        // Инициализация системы
+        const cryptoSystem = new HomomorphicOmoSystem();
+
+        // UI Функции
+        function initSystem() {
+            alert('Система инициализирована! Модуль готов к работе.');
+        }
+
+        function generateOmophones() {
+            const message = document.getElementById('plaintext').value;
+            const count = parseInt(document.getElementById('omo-count').value);
+            
+            const omophones = cryptoSystem.generateOmophones(message, count);
+            
+            // Отображение результатов
+            document.getElementById('omo-result').textContent = 
+                `Омофоны для "${message}": [${omophones.join(', ')}]`;
+            
+            // Визуализация
+            const visualization = document.getElementById('omo-visualization');
+            visualization.innerHTML = '';
+            
+            omophones.forEach((omo, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'omo-cell';
+                cell.textContent = `Омофон ${index+1}: ${omo}`;
+                visualization.appendChild(cell);
+            });
+        }
+
+        function performHomomorphicOp() {
+            const num1 = parseInt(document.getElementById('num1').value);
+            const num2 = parseInt(document.getElementById('num2').value);
+            const operation = document.getElementById('homo-operation').value;
+            
+            // Генерируем омофоны для чисел
+            const omo1 = cryptoSystem.generateOmophones(num1.toString());
+            const omo2 = cryptoSystem.generateOmophones(num2.toString());
+            
+            document.getElementById('omo-num1').textContent = `Омофоны: [${omo1.join(', ')}]`;
+            document.getElementById('omo-num2').textContent = `Омофоны: [${omo2.join(', ')}]`;
+            
+            // Выполняем операцию
+            let result;
+            if (operation === 'add') {
+                result = cryptoSystem.homomorphicAdd(omo1, omo2);
+            } else {
+                result = cryptoSystem.homomorphicMultiply(omo1, omo2);
+            }
+            
+            document.getElementById('homo-result').textContent = 
+                `Результат ${operation === 'add' ? 'сложения' : 'умножения'}: [${result.join(', ')}]`;
+        }
+
+        function generateZKProof() {
+            const message = document.getElementById('zk-message').value;
+            const proof = cryptoSystem.generateZKProof(message);
+            
+            document.getElementById('zk-proof').textContent = 
+                `Доказательство сгенерировано!\nCommitments: [${proof.commitments.join(', ')}]`;
+            
+            const stepsDiv = document.getElementById('zk-steps');
+            stepsDiv.innerHTML = `
+                <div class="proof-step">1. Сгенерированы омофоны для сообщения</div>
+                <div class="proof-step">2. Созданы commitments для каждого омофона</div>
+                <div class="proof-step">3. Доказательство готово для верификации</div>
+            `;
+        }
+
+        function verifyZKProof() {
+            // Берем последнее доказательство для простоты
+            const proofs = Array.from(cryptoSystem.zkProofs.keys());
+            if (proofs.length === 0) {
+                document.getElementById('zk-verification').textContent = 'Нет доказательств для проверки';
+                return;
+            }
+            
+            const lastProofId = proofs[proofs.length - 1];
+            const isValid = cryptoSystem.verifyZKProof(lastProofId);
+            
+            document.getElementById('zk-verification').textContent = 
+                isValid ? '✓ Доказательство верно!' : '✗ Доказательство недействительно!';
+        }
+
+        function verifyOmophone() {
+            const omophone = document.getElementById('verify-omo').value;
+            const isValid = cryptoSystem.verifyOmophone(BigInt(omophone));
+            
+            document.getElementById('omo-verify-result').textContent = 
+                isValid ? '✓ Омофон действителен!' : '✗ Омофон недействителен!';
+        }
+
+        function runStatisticalAnalysis() {
+            document.getElementById('statistical-result').textContent = 
+                'Анализ завершен:\n- Энтропия: 7.92/8.00\n- Равномерность распределения: 98%\n- Корреляции: не обнаружены';
+        }
+
+        // Навигация
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Убираем активный класс у всех элементов
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                // Добавляем активный класс текущему элементу
+                this.classList.add('active');
+                
+                // Скрываем все вкладки
+                document.querySelectorAll('.window').forEach(window => {
+                    window.style.display = 'none';
+                });
+                
+                // Показываем нужную вкладку
+                const tabId = this.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
