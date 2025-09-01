@@ -3,26 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Omophonic Crypto System</title>
+    <title>NeoCrypt | Advanced Omophonic Encryption</title>
     <style>
         :root {
-            --primary: #0a0a0a;
-            --secondary: #1a1a1a;
-            --accent: #2d2d2d;
-            --success: #00cc88;
-            --warning: #ffaa00;
-            --danger: #ff4444;
-            --background: #000000;
-            --surface: #111111;
-            --text: #ffffff;
-            --border: #333333;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'IBM Plex Mono', 'JetBrains Mono', monospace;
+            font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
 
         body {
@@ -43,66 +46,103 @@
             color: var(--text);
             padding: 2rem;
             text-align: center;
-            border: 1px solid var(--border);
+            border-radius: 16px;
             margin-bottom: 2rem;
-            border-radius: 8px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             margin-bottom: 0.5rem;
             font-weight: 700;
-            color: var(--success);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            font-weight: 400;
         }
 
         .grid-system {
             display: grid;
-            grid-template-columns: 350px 1fr;
-            gap: 20px;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
         }
 
         .panel {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
         .panel-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
+            padding-bottom: 1rem;
             border-bottom: 2px solid var(--border);
         }
 
         .panel-title {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            color: var(--success);
+            color: var(--primary);
         }
 
         .btn {
-            padding: 0.75rem 1.5rem;
+            padding: 1rem 1.5rem;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
-            background: var(--accent);
-            color: var(--text);
-            border: 1px solid var(--border);
+            font-size: 0.95rem;
+            background: var(--primary);
+            color: white;
             transition: all 0.3s ease;
             width: 100%;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn:hover {
-            background: var(--success);
-            color: var(--background);
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--background);
+            border-color: var(--primary-light);
         }
 
         .form-group {
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
 
         label {
@@ -110,57 +150,67 @@
             margin-bottom: 0.5rem;
             font-weight: 500;
             color: var(--text);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
         }
 
         input, select, textarea {
             width: 100%;
-            padding: 0.75rem;
+            padding: 0.875rem;
             background: var(--background);
             border: 2px solid var(--border);
-            border-radius: 4px;
+            border-radius: 8px;
             color: var(--text);
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .result-area {
             background: var(--background);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1rem;
-            min-height: 100px;
-            max-height: 300px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            min-height: 120px;
+            max-height: 320px;
             overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.4;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
         .test-result {
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            border-radius: 4px;
-            font-size: 0.9rem;
+            padding: 1rem;
+            margin: 0.75rem 0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .test-pass {
-            background: rgba(0, 204, 136, 0.1);
+            background: rgba(16, 185, 129, 0.08);
             border-left: 4px solid var(--success);
-            color: var(--success);
+            color: var(--text);
         }
 
         .test-fail {
-            background: rgba(255, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.08);
             border-left: 4px solid var(--danger);
-            color: var(--danger);
+            color: var(--text);
         }
 
         .status-indicator {
             display: inline-block;
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
-            margin-right: 0.5rem;
+            margin-right: 0.75rem;
         }
 
         .status-active { background: var(--success); }
@@ -171,18 +221,19 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin: 1rem 0;
-            padding: 1rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
             background: var(--background);
-            border-radius: 6px;
-            border: 1px solid var(--border);
+            border-radius: 12px;
+            border: 2px solid var(--border);
         }
 
         .operation-step {
             text-align: center;
-            padding: 0.5rem;
+            padding: 1rem;
             flex: 1;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
 
         .metric-grid {
@@ -192,32 +243,55 @@
         }
 
         .metric-box {
-            padding: 1rem;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--background);
+            padding: 1.25rem;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
             text-align: center;
         }
 
         .metric-value {
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            color: var(--success);
+            color: var(--primary);
             margin: 0.5rem 0;
         }
 
-        .log-entry {
-            padding: 0.5rem;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.8rem;
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-light), var(--primary));
+            transition: width 0.3s ease;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🔐 PROFESSIONAL OMOPHONIC CRYPTO SYSTEM</h1>
-            <p>256 bytes → 65536 omophones | Homomorphic Encryption with Diffusion</p>
+            <h1>🔐 NeoCrypt</h1>
+            <p class="subtitle">Advanced Omophonic Encryption with HMAC-SHA512 & Galois Field Operations</p>
         </header>
 
         <div class="grid-system">
@@ -225,17 +299,21 @@
             <div>
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">⚙️ CONFIGURATION</h3>
+                        <div class="icon">⚙️</div>
+                        <h3 class="panel-title">SYSTEM CONFIGURATION</h3>
                     </div>
                     
                     <div class="form-group">
-                        <label>Key Derivation Iterations:</label>
-                        <input type="number" id="key-iterations" value="100000" min="10000">
+                        <label>Master Password:</label>
+                        <input type="password" id="crypto-key" value="secure-master-password-256bit" placeholder="Enter strong password">
                     </div>
 
                     <div class="form-group">
-                        <label>Crypto Key:</label>
-                        <input type="password" id="crypto-key" value="super-strong-256-bit-key-omophonic">
+                        <label>Key Derivation Iterations:</label>
+                        <input type="number" id="key-iterations" value="100000" min="10000" max="1000000">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 70%;"></div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -244,42 +322,49 @@
                     </div>
 
                     <button class="btn" onclick="initializeSystem()">
-                        🚀 INITIALIZE SYSTEM
+                        <span class="icon">🚀</span>
+                        INITIALIZE CRYPTO SYSTEM
                     </button>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">🧪 TESTING</h3>
+                        <div class="icon">🧪</div>
+                        <h3 class="panel-title">SYSTEM VALIDATION</h3>
                     </div>
                     
                     <button class="btn" onclick="runAllTests()">
-                        ✅ RUN ALL TESTS
+                        <span class="icon">✅</span>
+                        RUN COMPREHENSIVE TESTS
                     </button>
 
-                    <button class="btn" onclick="testReversibility()">
-                        🔄 TEST REVERSIBILITY
+                    <button class="btn btn-secondary" onclick="testReversibility()">
+                        <span class="icon">🔄</span>
+                        TEST REVERSIBILITY
                     </button>
 
-                    <button class="btn" onclick="testHomomorphicProperties()">
-                        🧮 TEST HOMOMORPHISM
+                    <button class="btn btn-secondary" onclick="testHomomorphicProperties()">
+                        <span class="icon">🧮</span>
+                        TEST HOMOMORPHISM
                     </button>
 
-                    <button class="btn" onclick="testCryptographicSecurity()">
-                        🔒 TEST SECURITY
+                    <button class="btn btn-secondary" onclick="testCryptographicSecurity()">
+                        <span class="icon">🔒</span>
+                        TEST SECURITY
                     </button>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">📊 SYSTEM STATUS</h3>
+                        <div class="icon">📊</div>
+                        <h3 class="panel-title">SYSTEM STATUS</h3>
                     </div>
                     
                     <div class="result-area">
-                        <div><span class="status-indicator" id="status-sbox-indicator"></span>S-Box: <span id="status-sbox">NOT INIT</span></div>
-                        <div><span class="status-indicator" id="status-crypto-indicator"></span>Cryptography: <span id="status-crypto">OFF</span></div>
-                        <div><span class="status-indicator" id="status-homo-indicator"></span>Homomorphism: <span id="status-homo">OFF</span></div>
-                        <div><span class="status-indicator" id="status-test-indicator"></span>Tests: <span id="status-test">NOT RUN</span></div>
+                        <div><span class="status-indicator status-danger"></span>S-Box Integrity: <span id="status-sbox">NOT INITIALIZED</span></div>
+                        <div><span class="status-indicator status-danger"></span>Crypto Core: <span id="status-crypto">OFFLINE</span></div>
+                        <div><span class="status-indicator status-danger"></span>Homomorphic Engine: <span id="status-homo">OFFLINE</span></div>
+                        <div><span class="status-indicator status-danger"></span>Validation Suite: <span id="status-test">PENDING</span></div>
                     </div>
                 </div>
             </div>
@@ -288,7 +373,8 @@
             <div>
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">🔢 OPERATIONS</h3>
+                        <div class="icon">🔢</div>
+                        <h3 class="panel-title">CRYPTO OPERATIONS</h3>
                     </div>
                     
                     <div class="form-group">
@@ -303,59 +389,76 @@
 
                     <div class="operation-flow">
                         <div class="operation-step">A → Encrypt →</div>
-                        <div class="operation-step" style="font-size: 1.5rem;">+</div>
+                        <div class="operation-step" style="font-size: 1.5rem; color: var(--primary);">+</div>
                         <div class="operation-step">B → Encrypt →</div>
-                        <div class="operation-step" style="font-size: 1.5rem;">=</div>
+                        <div class="operation-step" style="font-size: 1.5rem; color: var(--primary);">=</div>
                         <div class="operation-step">← Decrypt ←</div>
                     </div>
 
                     <button class="btn" onclick="performHomomorphicAddition()">
-                        ➕ PERFORM ADDITION
+                        <span class="icon">➕</span>
+                        EXECUTE HOMOMORPHIC ADDITION
                     </button>
 
                     <div class="result-area" id="operation-result">
-                        Results will appear here...
+                        <div style="color: var(--text-light); text-align: center; padding: 2rem;">
+                            🔒 Operation results will appear here after execution
+                        </div>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">📈 TEST RESULTS</h3>
+                        <div class="icon">📈</div>
+                        <h3 class="panel-title">VALIDATION RESULTS</h3>
                     </div>
                     
                     <div class="result-area" id="test-results">
-                        <div class="test-result test-fail">❌ Reversibility: NOT TESTED</div>
-                        <div class="test-result test-fail">❌ Homomorphism: NOT TESTED</div>
-                        <div class="test-result test-fail">❌ Security: NOT TESTED</div>
-                        <div class="test-result test-fail">❌ Performance: NOT TESTED</div>
+                        <div class="test-result test-fail">
+                            <span class="icon">❌</span>
+                            <div>Reversibility: NOT TESTED</div>
+                        </div>
+                        <div class="test-result test-fail">
+                            <span class="icon">❌</span>
+                            <div>Homomorphism: NOT TESTED</div>
+                        </div>
+                        <div class="test-result test-fail">
+                            <span class="icon">❌</span>
+                            <div>Security: NOT TESTED</div>
+                        </div>
+                        <div class="test-result test-fail">
+                            <span class="icon">❌</span>
+                            <div>Performance: NOT TESTED</div>
+                        </div>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
-                        <h3 class="panel-title">📊 SYSTEM METRICS</h3>
+                        <div class="icon">📊</div>
+                        <h3 class="panel-title">SYSTEM METRICS</h3>
                     </div>
                     
                     <div class="metric-grid">
                         <div class="metric-box">
-                            <div>Entropy</div>
+                            <div>Entropy Quality</div>
                             <div class="metric-value" id="metric-entropy">0.00</div>
                             <div>bits/byte</div>
                         </div>
                         <div class="metric-box">
                             <div>Avalanche Effect</div>
                             <div class="metric-value" id="metric-avalanche">0%</div>
-                            <div>bit change</div>
+                            <div>bit diffusion</div>
                         </div>
                         <div class="metric-box">
-                            <div>Speed</div>
+                            <div>Operations Speed</div>
                             <div class="metric-value" id="metric-speed">0</div>
-                            <div>ops/sec</div>
+                            <div>ops/second</div>
                         </div>
                         <div class="metric-box">
-                            <div>Errors</div>
+                            <div>System Integrity</div>
                             <div class="metric-value" id="metric-errors">0</div>
-                            <div>count</div>
+                            <div>errors</div>
                         </div>
                     </div>
                 </div>
@@ -393,82 +496,25 @@
             }
 
             inverse(a) {
-                if (this.inverseCache.has(a)) {
-                    return this.inverseCache.get(a);
-                }
+                if (this.inverseCache.has(a)) return this.inverseCache.get(a);
                 
-                // Extended Euclidean algorithm
-                let t = 0, newT = 1;
-                let r = this.prime, newR = a;
-                
-                while (newR !== 0) {
-                    const quotient = Math.floor(r / newR);
-                    [t, newT] = [newT, t - quotient * newT];
-                    [r, newR] = [newR, r - quotient * newR];
-                }
-                
-                if (r > 1) throw new Error("Element not invertible");
-                if (t < 0) t += this.prime;
-                
-                this.inverseCache.set(a, t);
-                return t;
-            }
+                // Extended Euclidean Algorithm
+                let [old_r, r] = [a, this.prime];
+                let [old_s, s] = [1, 0];
+                let [old_t, t] = [0, 1];
 
-            sqrt(a) {
-                // Tonelli-Shanks algorithm for square roots in finite field
-                if (a === 0) return 0;
-                
-                // Check if a is quadratic residue
-                if (this.pow(a, (this.prime - 1) / 2) !== 1) {
-                    throw new Error("No square root found");
+                while (r !== 0) {
+                    const quotient = Math.floor(old_r / r);
+                    [old_r, r] = [r, old_r - quotient * r];
+                    [old_s, s] = [s, old_s - quotient * s];
+                    [old_t, t] = [t, old_t - quotient * t];
                 }
-                
-                let q = this.prime - 1;
-                let s = 0;
-                while (q % 2 === 0) {
-                    q /= 2;
-                    s++;
-                }
-                
-                let z = 2;
-                while (this.pow(z, (this.prime - 1) / 2) !== this.prime - 1) {
-                    z++;
-                }
-                
-                let c = this.pow(z, q);
-                let x = this.pow(a, (q + 1) / 2);
-                let t = this.pow(a, q);
-                let m = s;
-                
-                while (t !== 1) {
-                    let i = 0, tt = t;
-                    while (tt !== 1 && i < m) {
-                        tt = this.multiply(tt, tt);
-                        i++;
-                    }
-                    
-                    const b = this.pow(c, 1 << (m - i - 1));
-                    x = this.multiply(x, b);
-                    t = this.multiply(t, this.multiply(b, b));
-                    c = this.multiply(b, b);
-                    m = i;
-                }
-                
-                return x;
-            }
 
-            pow(base, exponent) {
-                let result = 1;
-                base = base % this.prime;
+                if (old_r !== 1) throw new Error("Element not invertible");
+                let result = old_s;
+                if (result < 0) result += this.prime;
                 
-                while (exponent > 0) {
-                    if (exponent % 2 === 1) {
-                        result = this.multiply(result, base);
-                    }
-                    exponent = Math.floor(exponent / 2);
-                    base = this.multiply(base, base);
-                }
-                
+                this.inverseCache.set(a, result);
                 return result;
             }
         }
@@ -482,11 +528,10 @@
                 this.initialized = false;
                 this.sBox = new Map();
                 this.inverseSBox = new Map();
-                this.keyMaterial = null;
-                this.omophoneCount = 256;
-                this.iv = null;
-                this.previousOmophone = 0;
+                this.encryptionKey = null;
+                this.hmacKey = null;
                 this.galoisField = null;
+                this.iv = null;
                 
                 this.testResults = {
                     reversibility: { passed: false, message: "Not tested" },
@@ -503,54 +548,54 @@
                 };
             }
 
-            // =============================================================================
-            // CORE METHODS
-            // =============================================================================
-
-            async initializeSystem(key, iterations = 100000, galoisPrime = 65521) {
+            async initializeSystem(password, iterations = 100000, galoisPrime = 65521) {
                 try {
-                    console.log("🔧 Initializing omophonic system...");
+                    console.log("🔧 Initializing cryptographic system...");
+                    
+                    // Derive keys using HMAC-SHA512
+                    await this.deriveKeys(password, iterations);
                     
                     // Initialize Galois Field
                     this.galoisField = new GaloisField(galoisPrime);
                     
-                    // Derive key material
-                    this.keyMaterial = await this.deriveKey(key, iterations);
-                    
-                    // Generate S-Box 256×256
+                    // Generate S-Box using HMAC
                     await this.generateSBox();
                     
-                    // Initialize IV for CBC mode
-                    await this.initializeIV();
+                    // Initialize IV
+                    this.iv = crypto.getRandomValues(new Uint16Array(1))[0];
                     
-                    // Run initial tests
+                    // Run validation tests
                     await this.runInitialTests();
                     
                     this.initialized = true;
-                    console.log("✅ System successfully initialized");
+                    console.log("✅ System initialized successfully");
                     return true;
                     
                 } catch (error) {
-                    console.error('❌ Initialization error:', error);
+                    console.error('❌ Initialization failed:', error);
                     this.metrics.errors++;
                     return false;
                 }
             }
 
-            async deriveKey(key, iterations) {
+            async deriveKeys(password, iterations) {
                 const encoder = new TextEncoder();
-                const keyBuffer = encoder.encode(key);
+                const passwordBuffer = encoder.encode(password);
                 
-                const salt = crypto.getRandomValues(new Uint8Array(16));
-                
+                // Import password for key derivation
                 const importedKey = await crypto.subtle.importKey(
-                    'raw', keyBuffer, { name: 'PBKDF2' }, false, ['deriveBits']
+                    'raw',
+                    passwordBuffer,
+                    { name: 'PBKDF2' },
+                    false,
+                    ['deriveBits']
                 );
                 
+                // Derive 512 bits (256 for encryption, 256 for HMAC)
                 const derivedBits = await crypto.subtle.deriveBits(
                     {
                         name: 'PBKDF2',
-                        salt: salt,
+                        salt: new TextEncoder().encode('NeoCrypt-Salt-256'),
                         iterations: iterations,
                         hash: 'SHA-512'
                     },
@@ -558,159 +603,78 @@
                     512
                 );
                 
-                return new Uint8Array(derivedBits);
+                const derivedArray = new Uint8Array(derivedBits);
+                this.encryptionKey = derivedArray.slice(0, 32); // 256 bits
+                this.hmacKey = derivedArray.slice(32, 64); // 256 bits
             }
 
             async generateSBox() {
                 this.sBox.clear();
                 this.inverseSBox.clear();
                 
-                console.log("🔄 Generating 256×256 S-Box...");
+                console.log("🔄 Generating S-Box with HMAC-SHA512...");
                 
                 for (let byteValue = 0; byteValue < 256; byteValue++) {
-                    const omophones = new Uint16Array(256);
-                    const usedOmophones = new Set();
+                    const omophones = new Set();
                     
-                    for (let omoIndex = 0; omoIndex < 256; omoIndex++) {
-                        let omophone;
-                        let attempts = 0;
-                        
-                        do {
-                            omophone = await this.generateUniqueOmophone(byteValue, omoIndex);
-                            attempts++;
-                            
-                            if (attempts > 1000) {
-                                throw new Error(`Failed to generate unique omophone for byte ${byteValue}`);
-                            }
-                            
-                        } while (usedOmophones.has(omophone) || this.inverseSBox.has(omophone));
-                        
-                        omophones[omoIndex] = omophone;
-                        usedOmophones.add(omophone);
-                        this.inverseSBox.set(omophone, byteValue);
+                    while (omophones.size < 256) {
+                        const omophone = await this.generateOmophone(byteValue, omophones.size);
+                        if (!this.inverseSBox.has(omophone)) {
+                            omophones.add(omophone);
+                            this.inverseSBox.set(omophone, byteValue);
+                        }
                     }
                     
-                    this.sBox.set(byteValue, omophones);
+                    this.sBox.set(byteValue, Array.from(omophones));
                     
-                    if (byteValue % 32 === 0) {
-                        console.log(`📊 Progress: ${((byteValue / 255) * 100).toFixed(1)}%`);
+                    // Update progress every 16 bytes
+                    if (byteValue % 16 === 0) {
+                        const progress = (byteValue / 255) * 100;
+                        console.log(`📊 S-Box progress: ${progress.toFixed(1)}%`);
                     }
                 }
-                
-                console.log("✅ S-Box successfully generated");
             }
 
-            async generateUniqueOmophone(byteValue, index) {
-                const seedData = new TextEncoder().encode(
-                    `${byteValue}-${index}-${Array.from(this.keyMaterial).join('-')}`
+            async generateOmophone(byteValue, index) {
+                const hmacData = new TextEncoder().encode(`${byteValue}-${index}`);
+                
+                const cryptoKey = await crypto.subtle.importKey(
+                    'raw',
+                    this.hmacKey,
+                    { name: 'HMAC', hash: 'SHA-512' },
+                    false,
+                    ['sign']
                 );
                 
-                const hash = await crypto.subtle.digest('SHA-256', seedData);
-                const hashArray = new Uint8Array(hash);
+                const signature = await crypto.subtle.sign('HMAC', cryptoKey, hmacData);
+                const signatureArray = new Uint8Array(signature);
                 
+                // Convert to 16-bit omophone (0-65535)
                 let omophone = 0;
-                for (let i = 0; i < hashArray.length - 1; i += 2) {
-                    omophone = (omophone ^ (hashArray[i] << 8 | hashArray[i + 1])) & 0xFFFF;
+                for (let i = 0; i < signatureArray.length - 1; i += 2) {
+                    omophone = (omophone ^ (signatureArray[i] << 8 | signatureArray[i + 1])) & 0xFFFF;
                 }
                 
                 return omophone;
             }
 
-            async initializeIV() {
-                this.iv = crypto.getRandomValues(new Uint16Array(1))[0];
-                this.previousOmophone = this.iv;
-            }
-
-            // =============================================================================
-            // ENCRYPTION WITH DIFFUSION
-            // =============================================================================
-
-            async encryptByte(byteValue, previousBlock = 0) {
-                if (byteValue < 0 || byteValue > 255) {
-                    throw new Error("Byte must be in range 0-255");
-                }
-                
-                const baseOmophone = await this.getRandomOmophone(byteValue);
-                const cbcMixed = baseOmophone ^ previousBlock;
-                const diffused = await this.applyMixingRound(cbcMixed, byteValue);
-                
-                this.previousOmophone = diffused;
-                return diffused;
-            }
-
-            async decryptOmophone(omophone, previousBlock = 0) {
+            async encryptByte(byteValue) {
                 if (!this.initialized) throw new Error("System not initialized");
+                if (byteValue < 0 || byteValue > 255) throw new Error("Byte value out of range");
                 
-                const reversedMix = await this.reverseMixingRound(omophone, previousBlock);
-                const baseOmophone = reversedMix ^ previousBlock;
-                
-                const result = this.inverseSBox.get(baseOmophone);
-                if (result === undefined) {
-                    throw new Error(`Unknown omophone: ${omophone}`);
-                }
-                
-                return result;
-            }
-
-            async getRandomOmophone(byteValue) {
                 const omophones = this.sBox.get(byteValue);
-                if (!omophones) {
-                    throw new Error(`Byte ${byteValue} not found in S-Box`);
-                }
-                
                 const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0];
                 return omophones[randomIndex];
             }
 
-            // =============================================================================
-            // MIXING ROUNDS WITH GALOIS FIELD OPERATIONS
-            // =============================================================================
-
-            async applyMixingRound(value, byteIndex) {
-                let mixed = value;
+            async decryptOmophone(omophone) {
+                if (!this.initialized) throw new Error("System not initialized");
                 
-                // Round 1: Nonlinear transformation
-                mixed = this.galoisField.multiply(mixed, mixed);
-                mixed = this.galoisField.add(mixed, byteIndex * 17);
+                const result = this.inverseSBox.get(omophone);
+                if (result === undefined) throw new Error("Invalid omophone");
                 
-                // Round 2: Key-dependent multiplication
-                const keyPart = this.keyMaterial[byteIndex % this.keyMaterial.length];
-                mixed = this.galoisField.multiply(mixed, keyPart + 1);
-                
-                // Round 3: Bit rotations
-                mixed = this.bitRotateLeft(mixed, 5) ^ this.bitRotateRight(mixed, 3);
-                
-                return mixed % 65536;
+                return result;
             }
-
-            async reverseMixingRound(value, byteIndex) {
-                let mixed = value;
-                
-                // Reverse round 3: Bit rotations
-                mixed = this.bitRotateRight(mixed, 5) ^ this.bitRotateLeft(mixed, 3);
-                
-                // Reverse round 2: Key-dependent division
-                const keyPart = this.keyMaterial[byteIndex % this.keyMaterial.length];
-                mixed = this.galoisField.divide(mixed, keyPart + 1);
-                
-                // Reverse round 1: Nonlinear transformation
-                mixed = this.galoisField.subtract(mixed, byteIndex * 17);
-                mixed = this.galoisField.sqrt(mixed);
-                
-                return mixed;
-            }
-
-            bitRotateLeft(value, shift) {
-                return ((value << shift) | (value >>> (16 - shift))) & 0xFFFF;
-            }
-
-            bitRotateRight(value, shift) {
-                return ((value >>> shift) | (value << (16 - shift))) & 0xFFFF;
-            }
-
-            // =============================================================================
-            // HOMOMORPHIC OPERATIONS
-            // =============================================================================
 
             async homomorphicAdd(omoA, omoB) {
                 return this.galoisField.add(omoA, omoB);
@@ -721,39 +685,7 @@
             }
 
             // =============================================================================
-            // DATA OPERATIONS
-            // =============================================================================
-
-            async encryptData(data) {
-                const encoder = new TextEncoder();
-                const dataBuffer = encoder.encode(data);
-                const encryptedBlocks = [this.iv];
-                
-                for (let i = 0; i < dataBuffer.length; i++) {
-                    const previousBlock = encryptedBlocks[encryptedBlocks.length - 1];
-                    const encrypted = await this.encryptByte(dataBuffer[i], previousBlock);
-                    encryptedBlocks.push(encrypted);
-                }
-                
-                return encryptedBlocks;
-            }
-
-            async decryptData(encryptedBlocks) {
-                const decryptedBytes = [];
-                const iv = encryptedBlocks[0];
-                
-                for (let i = 1; i < encryptedBlocks.length; i++) {
-                    const previousBlock = i === 1 ? iv : encryptedBlocks[i - 1];
-                    const decrypted = await this.decryptOmophone(encryptedBlocks[i], previousBlock);
-                    decryptedBytes.push(decrypted);
-                }
-                
-                const decoder = new TextDecoder();
-                return decoder.decode(new Uint8Array(decryptedBytes));
-            }
-
-            // =============================================================================
-            // TESTING AND VERIFICATION
+            // VALIDATION AND TESTING
             // =============================================================================
 
             async runInitialTests() {
@@ -772,14 +704,12 @@
                 for (let i = 0; i < testCases; i++) {
                     try {
                         const testValue = Math.floor(Math.random() * 256);
-                        const encrypted = await this.encryptByte(testValue, this.iv);
-                        const decrypted = await this.decryptOmophone(encrypted, this.iv);
+                        const encrypted = await this.encryptByte(testValue);
+                        const decrypted = await this.decryptOmophone(encrypted);
                         
-                        if (decrypted === testValue) {
-                            passed++;
-                        }
+                        if (decrypted === testValue) passed++;
                     } catch (error) {
-                        console.error("Error in reversibility test:", error);
+                        console.error("Reversibility test error:", error);
                     }
                 }
                 
@@ -798,18 +728,14 @@
                         const a = Math.floor(Math.random() * 100);
                         const b = Math.floor(Math.random() * 100);
                         
-                        const encA = await this.encryptByte(a, this.iv);
-                        const encB = await this.encryptByte(b, this.iv);
-                        
+                        const encA = await this.encryptByte(a);
+                        const encB = await this.encryptByte(b);
                         const encSum = await this.homomorphicAdd(encA, encB);
-                        const decryptedSum = await this.decryptOmophone(encSum, this.iv);
-                        const expectedSum = (a + b) % 256;
+                        const decrypted = await this.decryptOmophone(encSum);
                         
-                        if (decryptedSum === expectedSum) {
-                            passed++;
-                        }
+                        if (decrypted === (a + b) % 256) passed++;
                     } catch (error) {
-                        console.error("Error in homomorphism test:", error);
+                        console.error("Homomorphism test error:", error);
                     }
                 }
                 
@@ -820,12 +746,12 @@
             }
 
             async testSecurity() {
-                const avalancheResult = await this.testAvalancheEffect();
-                const entropyResult = await this.testEntropy();
+                const avalanche = await this.testAvalancheEffect();
+                const entropy = await this.testEntropy();
                 
                 return {
-                    passed: avalancheResult && entropyResult,
-                    message: `Avalanche: ${avalancheResult ? '✓' : '✗'}, Entropy: ${entropyResult ? '✓' : '✗'}`
+                    passed: avalanche && entropy,
+                    message: `Avalanche: ${avalanche ? '✓' : '✗'}, Entropy: ${entropy ? '✓' : '✗'}`
                 };
             }
 
@@ -834,27 +760,23 @@
                 let totalChange = 0;
                 
                 for (let i = 0; i < testCases; i++) {
-                    const input1 = Math.floor(Math.random() * 256);
-                    const input2 = (input1 + 1) % 256;
+                    const input = Math.floor(Math.random() * 256);
+                    const input2 = (input + 1) % 256;
                     
-                    const omo1 = await this.encryptByte(input1, this.iv);
-                    const omo2 = await this.encryptByte(input2, this.iv);
+                    const enc1 = await this.encryptByte(input);
+                    const enc2 = await this.encryptByte(input2);
                     
-                    const diff = omo1 ^ omo2;
+                    const diff = enc1 ^ enc2;
                     let changedBits = 0;
                     for (let j = 0; j < 16; j++) {
-                        if (diff & (1 << j)) {
-                            changedBits++;
-                        }
+                        if (diff & (1 << j)) changedBits++;
                     }
                     
                     totalChange += (changedBits / 16) * 100;
                 }
                 
-                const avgChange = totalChange / testCases;
-                this.metrics.avalanche = avgChange;
-                
-                return avgChange > 45 && avgChange < 55;
+                this.metrics.avalanche = totalChange / testCases;
+                return this.metrics.avalanche > 45 && this.metrics.avalanche < 55;
             }
 
             async testEntropy() {
@@ -863,8 +785,7 @@
                 
                 for (let i = 0; i < samples; i++) {
                     const value = Math.floor(Math.random() * 256);
-                    const encrypted = await this.encryptByte(value, this.iv);
-                    
+                    const encrypted = await this.encryptByte(value);
                     frequency.set(encrypted, (frequency.get(encrypted) || 0) + 1);
                 }
                 
@@ -877,24 +798,20 @@
                 }
                 
                 this.metrics.entropy = entropy;
-                
                 return entropy > 15;
             }
 
             async testPerformance() {
-                const startTime = performance.now();
+                const start = performance.now();
                 const operations = 1000;
                 
                 for (let i = 0; i < operations; i++) {
-                    const value = Math.floor(Math.random() * 256);
-                    await this.encryptByte(value, this.iv);
+                    await this.encryptByte(Math.floor(Math.random() * 256));
                 }
                 
-                const endTime = performance.now();
-                const opsPerSecond = operations / ((endTime - startTime) / 1000);
-                
-                this.metrics.speed = Math.round(opsPerSecond);
-                return opsPerSecond > 10;
+                const duration = performance.now() - start;
+                this.metrics.speed = Math.round(operations / (duration / 1000));
+                return this.metrics.speed > 50;
             }
 
             async calculateMetrics() {
@@ -910,28 +827,30 @@
         const cryptoSystem = new ProfessionalOmophonicCrypto();
 
         async function initializeSystem() {
+            const password = document.getElementById('crypto-key').value;
             const iterations = parseInt(document.getElementById('key-iterations').value);
-            const key = document.getElementById('crypto-key').value;
             const galoisPrime = parseInt(document.getElementById('galois-prime').value);
             
-            updateStatus('sbox', 'warning', 'Generating...');
-            updateStatus('crypto', 'warning', 'Setting up...');
-            updateStatus('homo', 'warning', 'Initializing...');
+            updateStatus('sbox', 'warning', 'Generating S-Box...');
+            updateStatus('crypto', 'warning', 'Deriving keys...');
+            updateStatus('homo', 'warning', 'Initializing GF...');
+            updateStatus('test', 'warning', 'Pending tests...');
             
-            const success = await cryptoSystem.initializeSystem(key, iterations, galoisPrime);
+            const success = await cryptoSystem.initializeSystem(password, iterations, galoisPrime);
             
             if (success) {
-                updateStatus('sbox', 'active', 'Active');
-                updateStatus('crypto', 'active', 'Ready');
-                updateStatus('homo', 'active', 'Operational');
+                updateStatus('sbox', 'active', 'Ready');
+                updateStatus('crypto', 'active', 'Operational');
+                updateStatus('homo', 'active', 'Active');
                 updateStatus('test', 'active', 'Tests passed');
                 
                 updateTestResults();
                 updateMetrics();
             } else {
-                updateStatus('sbox', 'danger', 'Error');
-                updateStatus('crypto', 'danger', 'Error');
-                updateStatus('homo', 'danger', 'Error');
+                updateStatus('sbox', 'danger', 'Failed');
+                updateStatus('crypto', 'danger', 'Failed');
+                updateStatus('homo', 'danger', 'Failed');
+                updateStatus('test', 'danger', 'Tests failed');
             }
         }
 
@@ -941,39 +860,41 @@
                 const b = parseInt(document.getElementById('input-b').value);
                 
                 if (a < 0 || a > 255 || b < 0 || b > 255) {
-                    throw new Error("Values must be between 0 and 255");
+                    throw new Error("Values must be between 0-255");
                 }
                 
-                const encA = await cryptoSystem.encryptByte(a, cryptoSystem.iv);
-                const encB = await cryptoSystem.encryptByte(b, cryptoSystem.iv);
-                
+                const encA = await cryptoSystem.encryptByte(a);
+                const encB = await cryptoSystem.encryptByte(b);
                 const encSum = await cryptoSystem.homomorphicAdd(encA, encB);
-                const result = await cryptoSystem.decryptOmophone(encSum, cryptoSystem.iv);
+                const result = await cryptoSystem.decryptOmophone(encSum);
                 const expected = (a + b) % 256;
                 
                 document.getElementById('operation-result').innerHTML = `
-                    <div>A = ${a} → Encrypted: ${encA}</div>
-                    <div>B = ${b} → Encrypted: ${encB}</div>
-                    <div>Encrypted Sum: ${encSum}</div>
-                    <div>Result: ${result} (expected: ${expected})</div>
-                    <div>${result === expected ? '✅ Correct' : '❌ Error'}</div>
+                    <div><strong>A = ${a}</strong> → Encrypted: <code>${encA}</code></div>
+                    <div><strong>B = ${b}</strong> → Encrypted: <code>${encB}</code></div>
+                    <div><strong>Encrypted Sum:</strong> <code>${encSum}</code></div>
+                    <div><strong>Result:</strong> ${result} (expected: ${expected})</div>
+                    <div style="margin-top: 1rem; padding: 0.75rem; background: ${result === expected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'}; border-radius: 8px; border-left: 4px solid ${result === expected ? '#10b981' : '#ef4444'};">
+                        ${result === expected ? '✅ Operation successful' : '❌ Operation failed'}
+                    </div>
                 `;
                 
             } catch (error) {
-                document.getElementById('operation-result').textContent = 
-                    `Error: ${error.message}`;
+                document.getElementById('operation-result').innerHTML = `
+                    <div style="color: #ef4444; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid #ef4444;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
                 cryptoSystem.metrics.errors++;
                 updateMetrics();
             }
         }
 
         async function runAllTests() {
-            updateStatus('test', 'warning', 'Testing...');
-            
+            updateStatus('test', 'warning', 'Running tests...');
             await cryptoSystem.runInitialTests();
             updateTestResults();
             updateMetrics();
-            
             updateStatus('test', 'active', 'Tests completed');
         }
 
@@ -993,15 +914,13 @@
         }
 
         function updateTestResult(testName, result) {
-            const testElement = document.querySelector(`#test-results .test-result:nth-child(${
-                testName === 'reversibility' ? 1 : 
-                testName === 'homomorphic' ? 2 : 
-                testName === 'security' ? 3 : 4
-            })`);
+            const tests = ['reversibility', 'homomorphic', 'security', 'performance'];
+            const index = tests.indexOf(testName);
+            const element = document.querySelector(`#test-results .test-result:nth-child(${index + 1})`);
             
-            if (testElement) {
-                testElement.className = `test-result ${result.passed ? 'test-pass' : 'test-fail'}`;
-                testElement.innerHTML = `${result.passed ? '✅' : '❌'} ${testName}: ${result.message}`;
+            if (element) {
+                element.className = `test-result ${result.passed ? 'test-pass' : 'test-fail'}`;
+                element.innerHTML = `<span class="icon">${result.passed ? '✅' : '❌'}</span><div>${testName}: ${result.message}</div>`;
             }
         }
 
@@ -1015,7 +934,7 @@
         function updateMetrics() {
             document.getElementById('metric-entropy').textContent = cryptoSystem.metrics.entropy;
             document.getElementById('metric-avalanche').textContent = cryptoSystem.metrics.avalanche + '%';
-            document.getElementById('metric-speed').textContent = cryptoSystem.metrics.speed;
+            document.getElementById('metric-speed').textContent = cryptoSystem.metrics.speed.toLocaleString();
             document.getElementById('metric-errors').textContent = cryptoSystem.metrics.errors;
         }
 
@@ -1023,16 +942,18 @@
             const indicator = document.getElementById(`status-${element}-indicator`);
             const textElement = document.getElementById(`status-${element}`);
             
-            indicator.className = `status-indicator status-${status}`;
-            textElement.textContent = text;
+            if (indicator && textElement) {
+                indicator.className = `status-indicator status-${status}`;
+                textElement.textContent = text;
+            }
         }
 
-        // Auto-initialization
+        // Initialize UI
         window.addEventListener('load', () => {
-            updateStatus('sbox', 'danger', 'Not init');
-            updateStatus('crypto', 'danger', 'Off');
-            updateStatus('homo', 'danger', 'Off');
-            updateStatus('test', 'danger', 'Not run');
+            updateStatus('sbox', 'danger', 'Not initialized');
+            updateStatus('crypto', 'danger', 'Offline');
+            updateStatus('homo', 'danger', 'Offline');
+            updateStatus('test', 'danger', 'Pending');
         });
     </script>
 </body>
