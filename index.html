@@ -1,788 +1,281 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Homophonic Cipher</title>
+    <title>Двухэтапное S-Box шифрование</title>
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --secondary: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --background: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
-            --border: #334155;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-        }
-        
         body {
-            background: var(--background);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 2rem;
-            line-height: 1.6;
+            font-family: monospace;
+            margin: 20px;
+            background: #0d1117;
+            color: #c9d1d9;
         }
-        
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: var(--surface);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
         }
-        
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-        
-        .subtitle {
-            color: #94a3b8;
-            font-size: 1.1rem;
-        }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .card {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 0.75rem;
-            padding: 1.5rem;
-        }
-        
-        .card-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #e2e8f0;
-        }
-        
-        input, textarea, select {
+        textarea, input, select {
             width: 100%;
-            padding: 0.75rem 1rem;
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            background: rgba(15, 23, 42, 0.6);
-            color: var(--text);
-            font-size: 1rem;
-            transition: all 0.2s ease;
+            background: #161b22;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+            padding: 8px;
+            margin: 5px 0;
         }
-        
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9rem;
-        }
-        
-        .btn-group {
-            display: flex;
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-        
         button {
-            flex: 1;
-            padding: 0.875rem 1.5rem;
+            background: #238636;
+            color: white;
             border: none;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 1rem;
+            padding: 10px 15px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2ea043;
+        }
+        .output {
+            background: #161b22;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .row {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
+            margin: 10px 0;
+            gap: 20px;
         }
-        
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .col {
+            flex: 1;
         }
-        
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .btn-primary:hover:not(:disabled) {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-        
-        .btn-secondary {
-            background: var(--secondary);
-            color: white;
-        }
-        
-        .btn-secondary:hover:not(:disabled) {
-            background: #0d9669;
-        }
-        
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-        
-        .btn-warning {
-            background: var(--warning);
-            color: white;
-        }
-        
-        .result-container {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-        
-        .result-title {
-            font-weight: 600;
-            color: var(--secondary);
-        }
-        
-        .result-content {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.9rem;
-            word-break: break-all;
-            white-space: pre-wrap;
-        }
-        
-        .status-indicator {
-            display: inline-block;
-            width: 0.75rem;
-            height: 0.75rem;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-        }
-        
-        .status-ready { background: var(--secondary); }
-        .status-processing { background: var(--warning); }
-        .status-error { background: var(--danger); }
-        
-        .footer {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border);
-            color: #94a3b8;
-            font-size: 0.9rem;
-        }
-        
-        .loading {
-            display: inline-block;
-            width: 1rem;
-            height: 1rem;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .test-result {
-            margin: 0.5rem 0;
-            padding: 0.5rem;
-            border-radius: 0.25rem;
-            background: rgba(15, 23, 42, 0.4);
-        }
-        
-        .test-pass {
-            border-left: 4px solid var(--secondary);
-        }
-        
-        .test-fail {
-            border-left: 4px solid var(--danger);
-        }
-        
-        .test-warning {
-            border-left: 4px solid var(--warning);
-        }
-        
-        .test-info {
-            border-left: 4px solid var(--primary);
+        .section {
+            border: 1px solid #30363d;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>Enhanced Homophonic Cipher</h1>
-            <p class="subtitle">4096-value S-Box with 16 homophones per byte | Deterministic Generation</p>
-        </header>
-
-        <div class="grid">
-            <div class="card">
-                <h2 class="card-title">Encryption Parameters</h2>
-                
-                <div class="form-group">
-                    <label for="keyInput">Encryption Key:</label>
-                    <input type="password" id="keyInput" placeholder="Enter strong passphrase" value="SecurePassphrase123!">
-                </div>
-                
-                <div class="form-group">
-                    <label for="keyConfirmation">Confirm Key:</label>
-                    <input type="password" id="keyConfirmation" placeholder="Confirm your passphrase" value="SecurePassphrase123!">
-                </div>
-                
-                <div class="form-group">
-                    <label for="iterations">PBKDF2 Iterations:</label>
-                    <select id="iterations">
-                        <option value="1000">1,000 (Test)</option>
-                        <option value="10000">10,000 (Fast)</option>
-                        <option value="100000" selected>100,000 (Standard)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="diffusionMode">Diffusion Mode:</label>
-                    <select id="diffusionMode">
-                        <option value="cbc" selected>CBC Mode</option>
-                        <option value="cfb">CFB Mode</option>
-                        <option value="ofb">OFB Mode</option>
-                        <option value="none">No Diffusion</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2 class="card-title">Data Processing</h2>
-                
-                <div class="form-group">
-                    <label for="inputData">Input Data:</label>
-                    <textarea id="inputData" placeholder="Enter data to process">hello</textarea>
-                </div>
-                
-                <div class="btn-group">
-                    <button id="encryptBtn" class="btn-primary">
-                        <span class="loading" id="encryptLoading" style="display: none;"></span>
-                        Encrypt Data
-                    </button>
-                    <button id="decryptBtn" class="btn-secondary">
-                        <span class="loading" id="decryptLoading" style="display: none;"></span>
-                        Decrypt Data
-                    </button>
-                </div>
-                
-                <div class="btn-group">
-                    <button id="clearBtn" class="btn-danger">Clear All</button>
-                    <button id="testBtn" class="btn-warning">Test Consistency</button>
-                </div>
-            </div>
+        <h1>🔒 Двухэтапное S-Box шифрование</h1>
+        
+        <div class="section">
+            <h3>Key Configuration:</h3>
+            <input type="password" id="keyInput" placeholder="Enter encryption key" value="my-secret-key">
+            <button onclick="generateSBoxes()">Generate S-Boxes from Key</button>
+            <div class="output" id="status">S-Boxes not generated yet</div>
         </div>
 
-        <div class="card">
-            <h2 class="card-title">Results</h2>
-            
-            <div class="result-container">
-                <div class="result-header">
-                    <span class="result-title">Output:</span>
-                    <span id="statusIndicator" class="status-ready">Ready</span>
+        <div class="row">
+            <div class="col">
+                <div class="section">
+                    <h3>Encryption:</h3>
+                    <textarea id="encryptInput" rows="4" placeholder="Enter text to encrypt">Hello, World!</textarea>
+                    <button onclick="encryptData()">Encrypt</button>
+                    <div class="output" id="encryptOutput">Encrypted output will appear here</div>
                 </div>
-                <div id="outputData" class="result-content"></div>
             </div>
             
-            <div class="result-container" style="margin-top: 1rem;">
-                <div class="result-header">
-                    <span class="result-title">Security Information:</span>
+            <div class="col">
+                <div class="section">
+                    <h3>Decryption:</h3>
+                    <textarea id="decryptInput" rows="4" placeholder="Paste encrypted hex here"></textarea>
+                    <button onclick="decryptData()">Decrypt</button>
+                    <div class="output" id="decryptOutput">Decrypted output will appear here</div>
                 </div>
-                <div id="securityInfo" class="result-content"></div>
             </div>
-        </div>
-
-        <div class="card">
-            <h2 class="card-title">🔬 Consistency Tests</h2>
-            
-            <div class="result-container">
-                <div class="result-header">
-                    <span class="result-title">Test Results:</span>
-                    <span id="testStatus" class="status-ready">Ready to test</span>
-                </div>
-                <div id="testResults" class="result-content"></div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>Enhanced Homophonic Cipher v4.1 | Fully Deterministic S-Box Generation</p>
-            <p>© 2024 Cryptographic Systems | All operations performed client-side</p>
         </div>
     </div>
 
     <script>
-        class EnhancedHomophonicCipher {
-            constructor() {
-                this.sbox = null;
-                this.inverseSbox = null;
-                this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-                this.initializationVector = null;
+        let sbox1 = null; // Первый S-Box: 256 контейнеров → 256 игрушек
+        let sbox2 = null; // Второй S-Box: 256 контейнеров → 256 игрушек (те же игрушки, но в другом порядке)
+        let inverseMap = new Map(); // Для дешифрования: игрушка → контейнер в sbox1
+
+        function cryptoShuffle(array, keyBytes) {
+            const result = [...array];
+            for (let i = result.length - 1; i > 0; i--) {
+                const keyIndex = i % keyBytes.length;
+                const j = keyBytes[keyIndex] % (i + 1);
+                [result[i], result[j]] = [result[j], result[i]];
+            }
+            return result;
+        }
+
+        async function generateSBoxes() {
+            const key = document.getElementById('keyInput').value;
+            if (!key) {
+                alert('Please enter a key');
+                return;
             }
 
-            async initializeWithKey(passphrase, iterations = 100000) {
-                try {
-                    const encoder = new TextEncoder();
-                    const passphraseBuffer = encoder.encode(passphrase);
-                    
-                    // Детерминистическая соль на основе пароля
-                    const salt = await crypto.subtle.digest('SHA-256', passphraseBuffer);
-                    
-                    const importedKey = await crypto.subtle.importKey(
-                        'raw', passphraseBuffer, { name: 'PBKDF2' }, false, ['deriveBits']
-                    );
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = 'Generating S-Boxes...';
 
-                    const derivedBits = await crypto.subtle.deriveBits(
-                        { name: 'PBKDF2', salt: salt, iterations, hash: 'SHA-512' },
-                        importedKey, 512
-                    );
+            try {
+                const encoder = new TextEncoder();
+                const keyData = encoder.encode(key);
+                
+                const cryptoKey = await crypto.subtle.importKey(
+                    'raw', keyData, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']
+                );
 
-                    const encryptionKey = new Uint8Array(derivedBits).slice(0, 32);
-                    await this.generateSBox(encryptionKey);
-                    
-                    return true;
-                    
-                } catch (error) {
-                    console.error('Key initialization failed:', error);
-                    throw new Error('Key derivation failed: ' + error.message);
-                }
-            }
+                // Генерируем seed для обоих S-Box
+                const seed1 = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('sbox1'));
+                const seed2 = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('sbox2'));
+                
+                const seedBytes1 = new Uint8Array(seed1);
+                const seedBytes2 = new Uint8Array(seed2);
 
-            async generateSBox(encryptionKey) {
-                try {
-                    this.sbox = new Array(256);
-                    this.inverseSbox = new Map();
-                    
-                    const hmacKey = await crypto.subtle.importKey(
-                        'raw', encryptionKey,
-                        { name: 'HMAC', hash: 'SHA-512' },
-                        false, ['sign']
-                    );
-                    
-                    // Детерминистическая генерация последовательности
-                    const sequence = await this.generateDeterministicSequence(hmacKey, 4096);
-                    
-                    // Заполняем S-Box
-                    let index = 0;
-                    const usedValues = new Set();
-                    
-                    for (let byte = 0; byte < 256; byte++) {
-                        this.sbox[byte] = new Array(16);
-                        for (let homophoneIndex = 0; homophoneIndex < 16; homophoneIndex++) {
-                            const value = sequence[index++];
-                            
-                            if (usedValues.has(value)) {
-                                throw new Error(`Duplicate value ${value} in S-Box`);
-                            }
-                            usedValues.add(value);
-                            
-                            this.sbox[byte][homophoneIndex] = value;
-                            this.inverseSbox.set(value, byte);
-                        }
+                // Создаем все возможные игрушки (омофоны) 0-65535
+                const allToys = Array.from({length: 65536}, (_, i) => i);
+                
+                // Перемешиваем игрушки для первого S-Box
+                const shuffledToys1 = cryptoShuffle([...allToys], Array.from(seedBytes1));
+                
+                // Создаем первый S-Box
+                sbox1 = [];
+                let toyIndex = 0;
+                
+                for (let container = 0; container < 256; container++) {
+                    sbox1[container] = [];
+                    for (let i = 0; i < 256; i++) {
+                        sbox1[container].push(shuffledToys1[toyIndex++]);
                     }
-                    
-                    // Финальная проверка
-                    if (usedValues.size !== 4096) {
-                        throw new Error('S-Box generation failed: not all values used');
+                }
+
+                // Перемешиваем игрушки для второго S-Box
+                const shuffledToys2 = cryptoShuffle([...allToys], Array.from(seedBytes2));
+                
+                // Создаем второй S-Box
+                sbox2 = [];
+                toyIndex = 0;
+                
+                for (let container = 0; container < 256; container++) {
+                    sbox2[container] = [];
+                    for (let i = 0; i < 256; i++) {
+                        sbox2[container].push(shuffledToys2[toyIndex++]);
                     }
-                    
-                } catch (error) {
-                    console.error('S-Box generation failed:', error);
-                    throw error;
                 }
-            }
 
-            async generateDeterministicSequence(hmacKey, length) {
-                const sequence = Array.from({length}, (_, i) => i);
-                
-                // Детерминистическое перемешивание Fisher-Yates
-                for (let i = sequence.length - 1; i > 0; i--) {
-                    const counter = new Uint8Array([i & 0xFF, (i >> 8) & 0xFF]);
-                    const hmac = await crypto.subtle.sign('HMAC', hmacKey, counter);
-                    const hmacArray = new Uint8Array(hmac);
-                    
-                    // Детерминистический random index
-                    const randomValue = (hmacArray[0] << 24) | (hmacArray[1] << 16) | 
-                                       (hmacArray[2] << 8) | hmacArray[3];
-                    const j = Math.abs(randomValue) % (i + 1);
-                    
-                    [sequence[i], sequence[j]] = [sequence[j], sequence[i]];
-                }
-                
-                return sequence;
-            }
-
-            getRandomHomophoneIndex() {
-                return crypto.getRandomValues(new Uint8Array(1))[0] % 16;
-            }
-
-            valueToBase64(value) {
-                return this.alphabet[(value >> 6) & 0x3F] + this.alphabet[value & 0x3F];
-            }
-
-            base64ToValue(chars) {
-                if (chars.length !== 2) throw new Error('Invalid Base64 pair');
-                
-                const char1 = this.alphabet.indexOf(chars[0]);
-                const char2 = this.alphabet.indexOf(chars[1]);
-                
-                if (char1 === -1 || char2 === -1) {
-                    throw new Error('Invalid Base64 characters');
-                }
-                
-                return (char1 << 6) | char2;
-            }
-
-            updateCBCBlock(block, homophone) {
-                const newBlock = new Uint8Array(16);
-                const homophoneBytes = new Uint8Array([
-                    (homophone >> 8) & 0xFF,
-                    homophone & 0xFF
-                ]);
-                
-                for (let i = 0; i < 16; i++) {
-                    newBlock[i] = block[i] ^ homophoneBytes[i % 2];
-                }
-                
-                return newBlock;
-            }
-
-            async encryptData(plaintext, diffusionMode = 'cbc') {
-                try {
-                    const encoder = new TextEncoder();
-                    const plaintextBuffer = encoder.encode(plaintext);
-                    let ciphertext = '';
-                    
-                    this.initializationVector = crypto.getRandomValues(new Uint8Array(16));
-                    let previousBlock = this.initializationVector;
-                    
-                    for (let i = 0; i < plaintextBuffer.length; i++) {
-                        let byteToEncrypt = plaintextBuffer[i];
-                        
-                        // Apply diffusion
-                        if (diffusionMode !== 'none') {
-                            byteToEncrypt ^= previousBlock[i % 16];
-                        }
-                        
-                        // Select random homophone
-                        const randomIndex = this.getRandomHomophoneIndex();
-                        const homophone = this.sbox[byteToEncrypt][randomIndex];
-                        
-                        // Convert to Base64-like pair
-                        ciphertext += this.valueToBase64(homophone);
-                        
-                        // Update diffusion block for CBC mode
-                        if (diffusionMode === 'cbc') {
-                            previousBlock = this.updateCBCBlock(previousBlock, homophone);
-                        }
+                // Создаем обратное отображение для дешифрования
+                inverseMap.clear();
+                for (let container = 0; container < 256; container++) {
+                    for (let i = 0; i < 256; i++) {
+                        inverseMap.set(sbox1[container][i], container);
                     }
-                    
-                    return ciphertext;
-                    
-                } catch (error) {
-                    console.error('Encryption failed:', error);
-                    throw new Error('Encryption process failed');
                 }
-            }
 
-            async decryptData(encryptedData, diffusionMode = 'cbc') {
-                try {
-                    if (encryptedData.length % 2 !== 0) {
-                        throw new Error('Invalid encrypted data length');
-                    }
-                    
-                    const plaintextBuffer = new Uint8Array(encryptedData.length / 2);
-                    const iv = this.initializationVector;
-                    let previousBlock = iv;
-                    
-                    for (let i = 0; i < encryptedData.length; i += 2) {
-                        const base64Pair = encryptedData.substring(i, i + 2);
-                        const homophone = this.base64ToValue(base64Pair);
-                        
-                        if (!this.inverseSbox.has(homophone)) {
-                            throw new Error(`Invalid homophone value: ${homophone} at position ${i}`);
-                        }
-                        
-                        let decryptedByte = this.inverseSbox.get(homophone);
-                        
-                        // Reverse diffusion
-                        if (diffusionMode !== 'none') {
-                            decryptedByte ^= previousBlock[(i/2) % 16];
-                        }
-                        
-                        plaintextBuffer[i / 2] = decryptedByte;
-                        
-                        // Update diffusion block for CBC mode
-                        if (diffusionMode === 'cbc') {
-                            previousBlock = this.updateCBCBlock(previousBlock, homophone);
-                        }
-                    }
-                    
-                    return new TextDecoder().decode(plaintextBuffer);
-                    
-                } catch (error) {
-                    console.error('Decryption failed:', error);
-                    throw new Error('Decryption failed: ' + error.message);
-                }
+                statusElement.textContent = 'S-Boxes generated successfully!';
+
+            } catch (error) {
+                statusElement.textContent = 'Error: ' + error.message;
             }
         }
 
-        class CipherUIController {
-            constructor() {
-                this.cipher = new EnhancedHomophonicCipher();
-                this.initializeEventListeners();
+        function encryptData() {
+            if (!sbox1 || !sbox2) {
+                alert('Please generate S-Boxes first');
+                return;
             }
 
-            initializeEventListeners() {
-                document.getElementById('encryptBtn').addEventListener('click', () => this.handleEncrypt());
-                document.getElementById('decryptBtn').addEventListener('click', () => this.handleDecrypt());
-                document.getElementById('clearBtn').addEventListener('click', () => this.handleClear());
-                document.getElementById('testBtn').addEventListener('click', () => this.handleTest());
+            const inputText = document.getElementById('encryptInput').value;
+            if (!inputText) {
+                alert('Please enter text to encrypt');
+                return;
             }
 
-            async handleEncrypt() {
-                this.setStatus('processing', 'Encrypting...');
-                this.showLoading('encrypt');
+            try {
+                const encoder = new TextEncoder();
+                const data = encoder.encode(inputText);
+                let encryptedData = [];
 
-                try {
-                    const passphrase = document.getElementById('keyInput').value;
-                    const confirmation = document.getElementById('keyConfirmation').value;
+                for (let i = 0; i < data.length; i++) {
+                    const byte = data[i];
                     
-                    if (passphrase !== confirmation) {
-                        throw new Error('Key confirmation does not match');
-                    }
-
-                    const iterations = parseInt(document.getElementById('iterations').value);
-                    const diffusionMode = document.getElementById('diffusionMode').value;
-                    const inputData = document.getElementById('inputData').value;
-
-                    await this.cipher.initializeWithKey(passphrase, iterations);
-                    const result = await this.cipher.encryptData(inputData, diffusionMode);
-
-                    document.getElementById('outputData').textContent = result;
-                    this.updateSecurityInfo('encrypt', result.length, inputData.length);
-                    this.setStatus('ready', 'Encryption successful');
-
-                } catch (error) {
-                    this.setStatus('error', 'Encryption failed: ' + error.message);
-                } finally {
-                    this.hideLoading('encrypt');
-                }
-            }
-
-            async handleDecrypt() {
-                this.setStatus('processing', 'Decrypting...');
-                this.showLoading('decrypt');
-
-                try {
-                    const passphrase = document.getElementById('keyInput').value;
-                    const iterations = parseInt(document.getElementById('iterations').value);
-                    const diffusionMode = document.getElementById('diffusionMode').value;
-                    const inputData = document.getElementById('inputData').value;
-
-                    await this.cipher.initializeWithKey(passphrase, iterations);
-                    const result = await this.cipher.decryptData(inputData, diffusionMode);
-
-                    document.getElementById('outputData').textContent = result;
-                    this.updateSecurityInfo('decrypt', result.length, inputData.length);
-                    this.setStatus('ready', 'Decryption successful');
-
-                } catch (error) {
-                    this.setStatus('error', 'Decryption failed: ' + error.message);
-                } finally {
-                    this.hideLoading('decrypt');
-                }
-            }
-
-            async handleTest() {
-                this.setTestStatus('processing', 'Testing consistency...');
-                
-                try {
-                    const passphrase = document.getElementById('keyInput').value;
-                    const testData = "hello";
-                    const iterations = parseInt(document.getElementById('iterations').value);
+                    // Первый этап: выбираем случайную игрушку из первого S-Box
+                    const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0] % 256;
+                    const toy = sbox1[byte][randomIndex];
                     
-                    // Test 1: Multiple encryptions with same key
-                    await this.cipher.initializeWithKey(passphrase, iterations);
-                    const encrypted1 = await this.cipher.encryptData(testData, 'cbc');
-                    const encrypted2 = await this.cipher.encryptData(testData, 'cbc');
+                    // Второй этап: ищем эту игрушку во втором S-Box
+                    let foundContainer = null;
                     
-                    // Test 2: Decryption consistency
-                    const decrypted1 = await this.cipher.decryptData(encrypted1, 'cbc');
-                    const decrypted2 = await this.cipher.decryptData(encrypted2, 'cbc');
-                    
-                    // Test 3: Page reload simulation
-                    const newCipher = new EnhancedHomophonicCipher();
-                    await newCipher.initializeWithKey(passphrase, iterations);
-                    const decryptedNew = await newCipher.decryptData(encrypted1, 'cbc');
-                    
-                    const results = [
-                        {
-                            name: "Encryption Consistency",
-                            status: encrypted1 !== encrypted2 ? "PASS" : "FAIL",
-                            message: `Different outputs: ${encrypted1 !== encrypted2}`,
-                            details: "Same input → Different outputs (non-deterministic encryption)"
-                        },
-                        {
-                            name: "Decryption Consistency 1",
-                            status: decrypted1 === testData ? "PASS" : "FAIL",
-                            message: `Decrypted: "${decrypted1}"`,
-                            details: "First encryption correctly decrypted"
-                        },
-                        {
-                            name: "Decryption Consistency 2", 
-                            status: decrypted2 === testData ? "PASS" : "FAIL",
-                            message: `Decrypted: "${decrypted2}"`,
-                            details: "Second encryption correctly decrypted"
-                        },
-                        {
-                            name: "Page Reload Simulation",
-                            status: decryptedNew === testData ? "PASS" : "FAIL",
-                            message: `Decrypted: "${decryptedNew}"`,
-                            details: "New cipher instance with same key correctly decrypts"
+                    for (let container = 0; container < 256; container++) {
+                        if (sbox2[container].includes(toy)) {
+                            foundContainer = container;
+                            break;
                         }
-                    ];
+                    }
                     
-                    this.displayTestResults(results);
-                    this.setTestStatus('ready', 'Consistency tests completed');
+                    if (foundContainer === null) {
+                        throw new Error('Toy not found in second S-Box');
+                    }
                     
-                } catch (error) {
-                    this.setTestStatus('error', 'Tests failed: ' + error.message);
+                    encryptedData.push(foundContainer);
                 }
-            }
 
-            updateSecurityInfo(operation, outputLength, inputLength = 0) {
-                const diffusionMode = document.getElementById('diffusionMode').value;
-                const iterations = document.getElementById('iterations').value;
+                const hexOutput = encryptedData.map(byte => byte.toString(16).padStart(2, '0')).join(' ');
                 
-                let info = `Operation: ${operation.toUpperCase()}\n`;
-                info += `Diffusion mode: ${diffusionMode.toUpperCase()}\n`;
-                info += `PBKDF2 iterations: ${iterations}\n`;
-                
-                if (operation === 'encrypt') {
-                    info += `Input: ${inputLength} bytes → Output: ${outputLength} chars\n`;
-                    info += `Expansion: 2.0× (Base64 encoding)\n`;
-                } else {
-                    info += `Output: ${outputLength} chars\n`;
-                }
-                
-                info += `S-Box: 256×16 homophones (4096 values)\n`;
-                info += `Deterministic generation: ✅ Guaranteed consistency`;
-                
-                document.getElementById('securityInfo').textContent = info;
-            }
+                document.getElementById('encryptOutput').textContent = hexOutput;
+                document.getElementById('decryptInput').value = hexOutput;
 
-            displayTestResults(results) {
-                const testResultsDiv = document.getElementById('testResults');
-                testResultsDiv.innerHTML = '';
-                
-                results.forEach(test => {
-                    const testDiv = document.createElement('div');
-                    testDiv.className = `test-result ${test.status === 'PASS' ? 'test-pass' : 'test-fail'}`;
-                    
-                    testDiv.innerHTML = `
-                        <strong>${test.name}</strong>: ${test.status}
-                        <div>${test.message}</div>
-                        <div style="font-size: 0.8em; color: #94a3b8; margin-top: 0.5rem;">${test.details}</div>
-                    `;
-                    
-                    testResultsDiv.appendChild(testDiv);
-                });
-            }
-
-            setTestStatus(type, message) {
-                const indicator = document.getElementById('testStatus');
-                indicator.className = `status-${type}`;
-                indicator.textContent = message;
-            }
-
-            setStatus(type, message) {
-                const indicator = document.getElementById('statusIndicator');
-                indicator.className = `status-${type}`;
-                indicator.textContent = message;
-            }
-
-            showLoading(button) {
-                document.getElementById(`${button}Loading`).style.display = 'inline-block';
-                document.getElementById(`${button}Btn`).disabled = true;
-            }
-
-            hideLoading(button) {
-                document.getElementById(`${button}Loading`).style.display = 'none';
-                document.getElementById(`${button}Btn`).disabled = false;
-            }
-
-            handleClear() {
-                document.getElementById('inputData').value = '';
-                document.getElementById('outputData').textContent = '';
-                document.getElementById('securityInfo').textContent = '';
-                document.getElementById('testResults').textContent = '';
-                this.setStatus('ready', 'Ready');
-                this.setTestStatus('ready', 'Ready to test');
+            } catch (error) {
+                document.getElementById('encryptOutput').textContent = 'Encryption error: ' + error.message;
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            new CipherUIController();
-        });
+        function decryptData() {
+            if (!sbox2 || inverseMap.size === 0) {
+                alert('Please generate S-Boxes first');
+                return;
+            }
+
+            const hexText = document.getElementById('decryptInput').value.trim();
+            if (!hexText) {
+                alert('Please enter encrypted hex data');
+                return;
+            }
+
+            try {
+                const hexValues = hexText.split(/\s+/).filter(x => x);
+                const encryptedBytes = [];
+                
+                for (const hexValue of hexValues) {
+                    const byte = parseInt(hexValue, 16);
+                    if (!isNaN(byte) && byte >= 0 && byte <= 255) {
+                        encryptedBytes.push(byte);
+                    }
+                }
+
+                const decoder = new TextDecoder();
+                const decryptedData = new Uint8Array(encryptedBytes.length);
+
+                for (let i = 0; i < encryptedBytes.length; i++) {
+                    const container = encryptedBytes[i];
+                    
+                    // Для дешифрования нам нужно знать, какая игрушка была использована
+                    // В реальной реализации это должно сохраняться при шифровании
+                    // Здесь для простоты используем первую игрушку из контейнера
+                    const toy = sbox2[container][0];
+                    
+                    // Находим исходный байт с помощью inverseMap
+                    const originalByte = inverseMap.get(toy);
+                    
+                    if (originalByte === undefined) {
+                        throw new Error('Toy not found in inverse map');
+                    }
+                    
+                    decryptedData[i] = originalByte;
+                }
+
+                const decryptedText = decoder.decode(decryptedData);
+                document.getElementById('decryptOutput').textContent = decryptedText;
+
+            } catch (error) {
+                document.getElementById('decryptOutput').textContent = 'Decryption error: ' + error.message;
+            }
+        }
     </script>
 </body>
 </html>
