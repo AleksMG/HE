@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S-Box шифрование</title>
+    <title>Омофоническое шифрование 2→2</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background: #0d1117; color: #c9d1d9; }
         .container { max-width: 1000px; margin: 0 auto; }
@@ -20,7 +20,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🔒 S-Box шифрование с маркировкой</h1>
+        <h1>🔒 Омофоническое шифрование (2 байта → 2 байта)</h1>
         
         <div class="panel">
             <h3>Конфигурация ключа:</h3>
@@ -32,19 +32,21 @@
         <div class="row">
             <div class="col">
                 <div class="panel">
-                    <h3>Шифрование:</h3>
-                    <textarea id="encryptInput" rows="4" placeholder="Введите текст для шифрования">Hello, World!</textarea>
-                    <button onclick="encryptData()">Зашифровать</button>
-                    <div class="output" id="encryptOutput">Зашифрованный текст появится здесь</div>
+                    <h3>Шифрование (2 байта):</h3>
+                    <input type="text" id="byte1Input" placeholder="Байт 1 (0-255)" value="18">
+                    <input type="text" id="byte2Input" placeholder="Байт 2 (0-255)" value="52">
+                    <button onclick="encryptTwoBytes()">Зашифровать 2 байта</button>
+                    <div class="output" id="encryptOutput">Зашифрованные байты появятся здесь</div>
                 </div>
             </div>
             
             <div class="col">
                 <div class="panel">
-                    <h3>Дешифрование:</h3>
-                    <textarea id="decryptInput" rows="4" placeholder="Вставьте hex-строку для дешифрования"></textarea>
-                    <button onclick="decryptData()">Дешифровать</button>
-                    <div class="output" id="decryptOutput">Дешифрованный текст появится здесь</div>
+                    <h3>Дешифрование (2 байта):</h3>
+                    <input type="text" id="encByte1Input" placeholder="Зашифрованный байт 1">
+                    <input type="text" id="encByte2Input" placeholder="Зашифрованный байт 2">
+                    <button onclick="decryptTwoBytes()">Дешифровать 2 байта</button>
+                    <div class="output" id="decryptOutput">Дешифрованные байты появятся здесь</div>
                 </div>
             </div>
         </div>
@@ -97,19 +99,17 @@
                 // 2. Перемешиваем криптостойко
                 const shuffledToys = await cryptoShuffle(allToys, key, 'sbox1-shuffle');
                 
-                // 3. Заполняем первый S-Box
+                // 3. Заполняем первый S-Box (256 контейнеров × 256 игрушек)
                 sbox1 = [];
-                let toyIndex = 0;
                 for (let container = 0; container < 256; container++) {
-                    sbox1[container] = shuffledToys.slice(toyIndex, toyIndex + 256);
-                    toyIndex += 256;
+                    sbox1[container] = shuffledToys.slice(container * 256, (container + 1) * 256);
                 }
 
-                // 4. Маркируем игрушки в первом S-Box
+                // 4. Маркируем игрушки: (контейнер << 16) | оригинальное_значение
                 for (let container = 0; container < 256; container++) {
                     for (let i = 0; i < 256; i++) {
-                        const globalToyNumber = container * 256 + i;
-                        sbox1[container][i] = `${container}-${globalToyNumber}`;
+                        const originalValue = sbox1[container][i];
+                        sbox1[container][i] = (container << 16) | originalValue;
                     }
                 }
 
@@ -124,104 +124,100 @@
                 }
 
                 statusElement.textContent = 'S-Box успешно сгенерированы!';
-                updateDebugInfo('Пример маркировки: ' + sbox1[0][0] + ', ' + sbox1[1][0] + ', ' + sbox1[255][255]);
+                updateDebugInfo('S-Box готовы. Пример: ' + 
+                    'sbox1[0][0] = ' + sbox1[0][0].toString(16).padStart(8, '0') +
+                    ', sbox2[0][0] = ' + sbox2[0][0].toString(16).padStart(8, '0'));
 
             } catch (error) {
                 statusElement.textContent = 'Ошибка: ' + error.message;
             }
         }
 
-        function encryptData() {
+        function encryptTwoBytes() {
             if (!sbox1) {
                 alert('Сначала сгенерируйте S-Box');
                 return;
             }
 
-            const inputText = document.getElementById('encryptInput').value;
-            if (!inputText) {
-                alert('Введите текст для шифрования');
+            const byte1 = parseInt(document.getElementById('byte1Input').value);
+            const byte2 = parseInt(document.getElementById('byte2Input').value);
+            
+            if (isNaN(byte1) || byte1 < 0 || byte1 > 255 ||
+                isNaN(byte2) || byte2 < 0 || byte2 > 255) {
+                alert('Введите корректные байты (0-255)');
                 return;
             }
 
             try {
-                const encoder = new TextEncoder();
-                const data = encoder.encode(inputText);
-                let encryptedData = [];
-                let debugInfo = [];
-
-                for (let i = 0; i < data.length; i++) {
-                    const originalByte = data[i];
-                    const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0] % 256;
-                    const markedToy = sbox1[originalByte][randomIndex];
-                    
-                    // Из маркировки "container-globalNumber" извлекаем container2
-                    const parts = markedToy.split('-');
-                    const container2 = parseInt(parts[1]) % 256; // globalNumber % 256
-                    
-                    debugInfo.push(`Байт ${originalByte} → ${markedToy} → контейнер ${container2}`);
-                    encryptedData.push(container2);
-                }
-
-                const hexOutput = encryptedData.map(byte => byte.toString(16).padStart(2, '0')).join(' ');
-                document.getElementById('encryptOutput').textContent = hexOutput;
-                document.getElementById('decryptInput').value = hexOutput;
-                updateDebugInfo(debugInfo.join('<br>'));
+                const originalValue = (byte1 << 8) | byte2;
+                const container1 = originalValue % 256;
+                
+                const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0] % 256;
+                const markedToy = sbox1[container1][randomIndex];
+                
+                const container2 = markedToy & 0xFF;
+                
+                document.getElementById('encryptOutput').textContent = 
+                    `Зашифровано: [${container2}, ${randomIndex}]`;
+                
+                document.getElementById('encByte1Input').value = container2;
+                document.getElementById('encByte2Input').value = randomIndex;
+                
+                updateDebugInfo(
+                    `Шифрование: [${byte1}, ${byte2}] = 0x${originalValue.toString(16).padStart(4, '0')}\n` +
+                    `Контейнер1: ${container1}, Случайный индекс: ${randomIndex}\n` +
+                    `Маркированная игрушка: 0x${markedToy.toString(16).padStart(8, '0')}\n` +
+                    `Результат: [${container2}, ${randomIndex}]`
+                );
 
             } catch (error) {
-                document.getElementById('encryptOutput').textContent = 'Ошибка шифрования: ' + error.message;
+                document.getElementById('encryptOutput').textContent = 'Ошибка: ' + error.message;
             }
         }
 
-        function decryptData() {
+        function decryptTwoBytes() {
             if (!sbox2) {
                 alert('Сначала сгенерируйте S-Box');
                 return;
             }
 
-            const hexText = document.getElementById('decryptInput').value.trim();
-            if (!hexText) {
-                alert('Введите зашифрованные данные');
+            const encByte1 = parseInt(document.getElementById('encByte1Input').value);
+            const encByte2 = parseInt(document.getElementById('encByte2Input').value);
+            
+            if (isNaN(encByte1) || encByte1 < 0 || encByte1 > 255 ||
+                isNaN(encByte2) || encByte2 < 0 || encByte2 > 255) {
+                alert('Введите корректные зашифрованные байты (0-255)');
                 return;
             }
 
             try {
-                const hexValues = hexText.split(/\s+/).filter(x => x);
-                const encryptedBytes = [];
+                const container2 = encByte1;
+                const choiceIndex = encByte2;
                 
-                for (const hexValue of hexValues) {
-                    const byte = parseInt(hexValue, 16);
-                    if (isNaN(byte) || byte < 0 || byte > 255) {
-                        throw new Error('Неверный hex-формат');
-                    }
-                    encryptedBytes.push(byte);
-                }
-
-                const decoder = new TextDecoder();
-                const decryptedData = new Uint8Array(encryptedBytes.length);
-                let debugInfo = [];
-
-                for (let i = 0; i < encryptedBytes.length; i++) {
-                    const container2 = encryptedBytes[i];
-                    const markedToy = sbox2[container2][0]; // Берем первую игрушку
-                    
-                    // Из маркировки "container-globalNumber" извлекаем исходный контейнер
-                    const originalContainer = parseInt(markedToy.split('-')[0]);
-                    
-                    debugInfo.push(`Контейнер ${container2} → ${markedToy} → байт ${originalContainer}`);
-                    decryptedData[i] = originalContainer;
-                }
-
-                const decryptedText = decoder.decode(decryptedData);
-                document.getElementById('decryptOutput').textContent = decryptedText;
-                updateDebugInfo(debugInfo.join('<br>'));
+                const markedToy = sbox2[container2][choiceIndex];
+                const originalValue = markedToy & 0xFFFF;
+                
+                const byte1 = (originalValue >> 8) & 0xFF;
+                const byte2 = originalValue & 0xFF;
+                
+                document.getElementById('decryptOutput').textContent = 
+                    `Дешифровано: [${byte1}, ${byte2}] = 0x${originalValue.toString(16).padStart(4, '0')}`;
+                
+                updateDebugInfo(
+                    `Дешифрование: [${encByte1}, ${encByte2}]\n` +
+                    `Контейнер2: ${container2}, Индекс: ${choiceIndex}\n` +
+                    `Маркированная игрушка: 0x${markedToy.toString(16).padStart(8, '0')}\n` +
+                    `Исходное значение: 0x${originalValue.toString(16).padStart(4, '0')}\n` +
+                    `Результат: [${byte1}, ${byte2}]`
+                );
 
             } catch (error) {
-                document.getElementById('decryptOutput').textContent = 'Ошибка дешифрования: ' + error.message;
+                document.getElementById('decryptOutput').textContent = 'Ошибка: ' + error.message;
             }
         }
 
         function updateDebugInfo(info) {
-            document.getElementById('debugInfo').innerHTML = '<div class="debug">' + info + '</div>';
+            document.getElementById('debugInfo').innerHTML = '<div class="debug">' + info.replace(/\n/g, '<br>') + '</div>';
         }
 
         window.onload = function() {
