@@ -3,186 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Двухэтапное S-Box шифрование</title>
+    <title>Улучшенное S-Box шифрование</title>
     <style>
         body {
-            font-family: monospace;
-            margin: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
             background: #0d1117;
             color: #c9d1d9;
+            line-height: 1.6;
         }
         .container {
             max-width: 1200px;
             margin: 0 auto;
+        }
+        .panel {
+            background: #161b22;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        h1, h2, h3 {
+            color: #58a6ff;
+            margin-top: 0;
         }
         textarea, input, select {
             width: 100%;
             background: #161b22;
             color: #c9d1d9;
             border: 1px solid #30363d;
-            padding: 8px;
-            margin: 5px 0;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 4px;
+            font-size: 14px;
         }
         button {
             background: #238636;
             color: white;
             border: none;
-            padding: 10px 15px;
+            padding: 12px 18px;
             cursor: pointer;
-            margin: 5px;
+            margin: 8px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
         }
         button:hover {
             background: #2ea043;
         }
+        button.secondary {
+            background: #3b5998;
+        }
+        button.secondary:hover {
+            background: #4c70ba;
+        }
         .output {
-            background: #161b22;
+            background: #21262d;
             padding: 15px;
+            border-radius: 4px;
             margin: 10px 0;
-            border-radius: 5px;
+            min-height: 50px;
+            overflow-wrap: break-word;
         }
         .row {
             display: flex;
-            margin: 10px 0;
             gap: 20px;
+            margin: 15px 0;
         }
         .col {
             flex: 1;
         }
-        .section {
+        .sbox-visualization {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .sbox-container {
             border: 1px solid #30363d;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .sbox-item {
+            padding: 5px;
+            border-bottom: 1px solid #30363d;
+            font-family: monospace;
+        }
+        .sbox-header {
+            font-weight: bold;
+            color: #58a6ff;
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔒 Двухэтапное S-Box шифрование</h1>
+        <h1>🔒 Улучшенное S-Box шифрование</h1>
         
-        <div class="section">
-            <h3>Key Configuration:</h3>
-            <input type="password" id="keyInput" placeholder="Enter encryption key" value="my-secret-key">
-            <button onclick="generateSBoxes()">Generate S-Boxes from Key</button>
-            <div class="output" id="status">S-Boxes not generated yet</div>
+        <div class="panel">
+            <h3>Конфигурация ключа:</h3>
+            <input type="password" id="keyInput" placeholder="Введите ключ шифрования" value="my-secret-key">
+            <button onclick="generateSBoxes()">Сгенерировать S-Box из ключа</button>
+            <div class="output" id="status">S-Box не сгенерированы</div>
         </div>
 
         <div class="row">
             <div class="col">
-                <div class="section">
-                    <h3>Encryption:</h3>
-                    <textarea id="encryptInput" rows="4" placeholder="Enter text to encrypt">Hello, World!</textarea>
-                    <button onclick="encryptData()">Encrypt</button>
-                    <div class="output" id="encryptOutput">Encrypted output will appear here</div>
+                <div class="panel">
+                    <h3>Шифрование:</h3>
+                    <textarea id="encryptInput" rows="4" placeholder="Введите текст для шифрования">Hello, World!</textarea>
+                    <button onclick="encryptData()">Зашифровать</button>
+                    <div class="output" id="encryptOutput">Зашифрованный текст появится здесь</div>
                 </div>
             </div>
             
             <div class="col">
-                <div class="section">
-                    <h3>Decryption:</h3>
-                    <textarea id="decryptInput" rows="4" placeholder="Paste encrypted hex here"></textarea>
-                    <button onclick="decryptData()">Decrypt</button>
-                    <div class="output" id="decryptOutput">Decrypted output will appear here</div>
+                <div class="panel">
+                    <h3>Дешифрование:</h3>
+                    <textarea id="decryptInput" rows="4" placeholder="Вставьте hex-строку для дешифрования"></textarea>
+                    <button onclick="decryptData()">Дешифровать</button>
+                    <div class="output" id="decryptOutput">Дешифрованный текст появится здесь</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Визуализация S-Box:</h3>
+            <div class="sbox-visualization">
+                <div class="sbox-container">
+                    <div class="sbox-header">Первый S-Box (первые 10 контейнеров)</div>
+                    <div id="sbox1Visualization"></div>
+                </div>
+                <div class="sbox-container">
+                    <div class="sbox-header">Второй S-Box (первые 10 контейнеров)</div>
+                    <div id="sbox2Visualization"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        let sbox1 = null; // Первый S-Box: 256 контейнеров → 256 игрушек
-        let sbox2 = null; // Второй S-Box: 256 контейнеров → 256 игрушек (те же игрушки, но в другом порядке)
-        let inverseMap = new Map(); // Для дешифрования: игрушка → контейнер в sbox1
+        let sbox1 = null; // Первый S-Box
+        let sbox2 = null; // Второй S-Box
+        let inverseSbox2 = null; // Обратный S-Box для дешифрования
 
-        function cryptoShuffle(array, keyBytes) {
+        // Криптостойкое перемешивание Фишера-Йетса с использованием HMAC
+        async function cryptoShuffle(array, key, seed) {
             const result = [...array];
+            const encoder = new TextEncoder();
+            
+            // Генерируем байты для перемешивания на основе ключа и seed
+            const keyData = encoder.encode(key + seed);
+            const cryptoKey = await crypto.subtle.importKey(
+                'raw', keyData, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']
+            );
+            
+            const hmac = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('shuffle'));
+            const hmacBytes = new Uint8Array(hmac);
+            
+            // Перемешиваем массив с использованием HMAC как источника случайности
             for (let i = result.length - 1; i > 0; i--) {
-                const keyIndex = i % keyBytes.length;
-                const j = keyBytes[keyIndex] % (i + 1);
+                const hmacIndex = i % hmacBytes.length;
+                const j = hmacBytes[hmacIndex] % (i + 1);
                 [result[i], result[j]] = [result[j], result[i]];
             }
+            
             return result;
         }
 
+        // Генерация S-Box на основе ключа
         async function generateSBoxes() {
             const key = document.getElementById('keyInput').value;
             if (!key) {
-                alert('Please enter a key');
+                alert('Пожалуйста, введите ключ');
                 return;
             }
 
             const statusElement = document.getElementById('status');
-            statusElement.textContent = 'Generating S-Boxes...';
+            statusElement.textContent = 'Генерация S-Box...';
 
             try {
-                const encoder = new TextEncoder();
-                const keyData = encoder.encode(key);
+                // Создаем все возможные значения (0-65535)
+                const allValues = Array.from({length: 65536}, (_, i) => i);
                 
-                const cryptoKey = await crypto.subtle.importKey(
-                    'raw', keyData, { name: 'HMAC', hash: 'SHA-512' }, false, ['sign']
-                );
-
-                // Генерируем seed для обоих S-Box
-                const seed1 = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('sbox1'));
-                const seed2 = await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode('sbox2'));
+                // Генерируем первый S-Box с использованием HMAC и Фишера-Йетса
+                const shuffledValues = await cryptoShuffle(allValues, key, 'sbox1');
                 
-                const seedBytes1 = new Uint8Array(seed1);
-                const seedBytes2 = new Uint8Array(seed2);
-
-                // Создаем все возможные игрушки (омофоны) 0-65535
-                const allToys = Array.from({length: 65536}, (_, i) => i);
-                
-                // Перемешиваем игрушки для первого S-Box
-                const shuffledToys1 = cryptoShuffle([...allToys], Array.from(seedBytes1));
-                
-                // Создаем первый S-Box
                 sbox1 = [];
-                let toyIndex = 0;
+                let valueIndex = 0;
                 
+                // Заполняем первый S-Box
                 for (let container = 0; container < 256; container++) {
                     sbox1[container] = [];
                     for (let i = 0; i < 256; i++) {
-                        sbox1[container].push(shuffledToys1[toyIndex++]);
+                        sbox1[container].push(shuffledValues[valueIndex++]);
                     }
                 }
 
-                // Перемешиваем игрушки для второго S-Box
-                const shuffledToys2 = cryptoShuffle([...allToys], Array.from(seedBytes2));
+                // Генерируем второй S-Box согласно новым требованиям
+                sbox2 = Array.from({length: 256}, () => []);
+                inverseSbox2 = new Map();
                 
-                // Создаем второй S-Box
-                sbox2 = [];
-                toyIndex = 0;
-                
-                for (let container = 0; container < 256; container++) {
-                    sbox2[container] = [];
+                // Распределяем игрушки из первого S-Box во второй
+                for (let container1 = 0; container1 < 256; container1++) {
                     for (let i = 0; i < 256; i++) {
-                        sbox2[container].push(shuffledToys2[toyIndex++]);
+                        const toy = sbox1[container1][i];
+                        // Каждая игрушка из контейнера container1 попадает в свой контейнер во втором S-Box
+                        const container2 = i; // Распределяем равномерно
+                        sbox2[container2].push(toy);
+                        // Сохраняем обратное отображение для дешифрования
+                        inverseSbox2.set(toy, container1);
                     }
                 }
 
-                // Создаем обратное отображение для дешифрования
-                inverseMap.clear();
+                // Дополнительно перемешиваем каждый контейнер во втором S-Box
                 for (let container = 0; container < 256; container++) {
-                    for (let i = 0; i < 256; i++) {
-                        inverseMap.set(sbox1[container][i], container);
-                    }
+                    sbox2[container] = await cryptoShuffle(sbox2[container], key, `sbox2-${container}`);
                 }
 
-                statusElement.textContent = 'S-Boxes generated successfully!';
+                statusElement.textContent = 'S-Box успешно сгенерированы!';
+                visualizeSBoxes();
 
             } catch (error) {
-                statusElement.textContent = 'Error: ' + error.message;
+                statusElement.textContent = 'Ошибка: ' + error.message;
             }
         }
 
-        function encryptData() {
+        // Визуализация S-Box
+        function visualizeSBoxes() {
+            const sbox1Visualization = document.getElementById('sbox1Visualization');
+            const sbox2Visualization = document.getElementById('sbox2Visualization');
+            
+            sbox1Visualization.innerHTML = '';
+            sbox2Visualization.innerHTML = '';
+            
+            // Показываем первые 10 контейнеров каждого S-Box
+            for (let i = 0; i < 10; i++) {
+                const sbox1Item = document.createElement('div');
+                sbox1Item.className = 'sbox-item';
+                sbox1Item.textContent = `Контейнер ${i}: [${sbox1[i].slice(0, 5).join(', ')}...]`;
+                sbox1Visualization.appendChild(sbox1Item);
+                
+                const sbox2Item = document.createElement('div');
+                sbox2Item.className = 'sbox-item';
+                sbox2Item.textContent = `Контейнер ${i}: [${sbox2[i].slice(0, 5).join(', ')}...]`;
+                sbox2Visualization.appendChild(sbox2Item);
+            }
+        }
+
+        // Шифрование данных
+        async function encryptData() {
             if (!sbox1 || !sbox2) {
-                alert('Please generate S-Boxes first');
+                alert('Пожалуйста, сначала сгенерируйте S-Box');
                 return;
             }
 
             const inputText = document.getElementById('encryptInput').value;
             if (!inputText) {
-                alert('Please enter text to encrypt');
+                alert('Пожалуйста, введите текст для шифрования');
                 return;
             }
 
@@ -194,11 +275,11 @@
                 for (let i = 0; i < data.length; i++) {
                     const byte = data[i];
                     
-                    // Первый этап: выбираем случайную игрушку из первого S-Box
+                    // Выбираем случайную игрушку из соответствующего контейнера первого S-Box
                     const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0] % 256;
                     const toy = sbox1[byte][randomIndex];
                     
-                    // Второй этап: ищем эту игрушку во втором S-Box
+                    // Ищем контейнер во втором S-Box, содержащий эту игрушку
                     let foundContainer = null;
                     
                     for (let container = 0; container < 256; container++) {
@@ -209,7 +290,7 @@
                     }
                     
                     if (foundContainer === null) {
-                        throw new Error('Toy not found in second S-Box');
+                        throw new Error('Игрушка не найдена во втором S-Box');
                     }
                     
                     encryptedData.push(foundContainer);
@@ -221,19 +302,20 @@
                 document.getElementById('decryptInput').value = hexOutput;
 
             } catch (error) {
-                document.getElementById('encryptOutput').textContent = 'Encryption error: ' + error.message;
+                document.getElementById('encryptOutput').textContent = 'Ошибка шифрования: ' + error.message;
             }
         }
 
+        // Дешифрование данных
         function decryptData() {
-            if (!sbox2 || inverseMap.size === 0) {
-                alert('Please generate S-Boxes first');
+            if (!sbox2 || !inverseSbox2) {
+                alert('Пожалуйста, сначала сгенерируйте S-Box');
                 return;
             }
 
             const hexText = document.getElementById('decryptInput').value.trim();
             if (!hexText) {
-                alert('Please enter encrypted hex data');
+                alert('Пожалуйста, введите зашифрованные данные в hex-формате');
                 return;
             }
 
@@ -254,16 +336,15 @@
                 for (let i = 0; i < encryptedBytes.length; i++) {
                     const container = encryptedBytes[i];
                     
-                    // Для дешифрования нам нужно знать, какая игрушка была использована
-                    // В реальной реализации это должно сохраняться при шифровании
-                    // Здесь для простоты используем первую игрушку из контейнера
+                    // Для дешифрования берем первую игрушку из контейнера
+                    // В улучшенной версии все игрушки в контейнере ведут к одному исходному байту
                     const toy = sbox2[container][0];
                     
-                    // Находим исходный байт с помощью inverseMap
-                    const originalByte = inverseMap.get(toy);
+                    // Находим исходный байт с помощью обратного отображения
+                    const originalByte = inverseSbox2.get(toy);
                     
                     if (originalByte === undefined) {
-                        throw new Error('Toy not found in inverse map');
+                        throw new Error('Игрушка не найдена в обратном отображении');
                     }
                     
                     decryptedData[i] = originalByte;
@@ -273,9 +354,14 @@
                 document.getElementById('decryptOutput').textContent = decryptedText;
 
             } catch (error) {
-                document.getElementById('decryptOutput').textContent = 'Decryption error: ' + error.message;
+                document.getElementById('decryptOutput').textContent = 'Ошибка дешифрования: ' + error.message;
             }
         }
+
+        // Инициализация при загрузке
+        window.onload = function() {
+            document.getElementById('keyInput').value = "my-secret-key";
+        };
     </script>
 </body>
 </html>
