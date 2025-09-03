@@ -250,7 +250,7 @@
         }
         
         .sbox-cell {
-            background: var(--bg-tertiary);
+            background: var(--bg-tertiary;
             padding: 5px;
             text-align: center;
         }
@@ -558,6 +558,7 @@
         let inverseSBox = null;
         let lastOperationResult = null;
         let lastEncryptedData = null;
+        let lastPlaintext = null;
         
         // Класс для профессиональной гомофонической криптосистемы
         class ProfessionalHomophonicCipher {
@@ -692,6 +693,9 @@
                 try {
                     const encoder = new TextEncoder();
                     const plaintextBytes = encoder.encode(plaintext);
+                    
+                    // Сохраняем оригинальный текст для теста лавинного эффекта
+                    lastPlaintext = new Uint8Array(plaintextBytes);
                     
                     // Генерация 16-байтного IV (кроме режима ECB)
                     if (mode !== 'ecb') {
@@ -1026,26 +1030,31 @@
             return frequencies;
         }
         
-        // Функция для теста лавинного эффекта
-        async function runAvalancheTestInternal(cipher, originalData, mode = 'cbc') {
-            if (!originalData || originalData.length === 0) {
-                throw new Error("Нет данных для теста лавинного эффекта");
+        // ПРАВИЛЬНАЯ функция для теста лавинного эффекта
+        async function runAvalancheTestInternal() {
+            if (!cipherInstance || !lastPlaintext) {
+                throw new Error("Сначала выполните шифрование данных");
             }
             
+            const mode = document.getElementById('operationMode').value;
             const encoder = new TextEncoder();
-            const originalText = encoder.decode(originalData);
+            
+            // Создаем копию оригинальных данных
+            const originalData = new Uint8Array(lastPlaintext);
             
             // Шифруем оригинальные данные
-            const originalEncrypted = await cipher.encrypt(originalText, mode);
+            const originalText = new TextDecoder().decode(originalData);
+            const originalEncrypted = await cipherInstance.encrypt(originalText, mode);
             
-            // Изменяем один бит в оригинальных данных и шифруем снова
+            // Создаем модифицированные данные (меняем один бит)
             const modifiedData = new Uint8Array(originalData);
             modifiedData[0] ^= 0x01; // Изменяем первый бит первого байта
             
-            const modifiedText = encoder.decode(modifiedData);
-            const modifiedEncrypted = await cipher.encrypt(modifiedText, mode);
+            // Шифруем модифицированные данные
+            const modifiedText = new TextDecoder().decode(modifiedData);
+            const modifiedEncrypted = await cipherInstance.encrypt(modifiedText, mode);
             
-            // Сравниваем результаты шифрования (исключаем IV из сравнения для режимов с IV)
+            // Определяем какие части сравнивать (исключаем IV для режимов с IV)
             let originalToCompare, modifiedToCompare;
             
             if (mode === 'ecb') {
@@ -1057,21 +1066,23 @@
                 modifiedToCompare = modifiedEncrypted.slice(16);
             }
             
-            const changes = new Uint8Array(originalToCompare.length);
+            // Сравниваем результаты шифрования
             let totalChanges = 0;
+            let totalBits = originalToCompare.length * 8;
             
             for (let i = 0; i < originalToCompare.length; i++) {
-                changes[i] = countBitDifferences(originalToCompare[i], modifiedToCompare[i]);
-                totalChanges += changes[i];
+                const byteChanges = countBitDifferences(originalToCompare[i], modifiedToCompare[i]);
+                totalChanges += byteChanges;
             }
             
-            const avalancheEffect = (totalChanges / (originalToCompare.length * 8)) * 100;
+            const avalancheEffect = (totalChanges / totalBits) * 100;
             
             return {
-                changes: changes,
                 totalChanges: totalChanges,
-                totalBits: originalToCompare.length * 8,
-                avalancheEffect: avalancheEffect
+                totalBits: totalBits,
+                avalancheEffect: avalancheEffect,
+                originalEncrypted: originalEncrypted,
+                modifiedEncrypted: modifiedEncrypted
             };
         }
         
@@ -1136,7 +1147,7 @@
             try {
                 const encryptedData = await cipherInstance.encrypt(inputText, mode);
                 
-                // Сохраняем зашифрованные данные для теста лавинного эффекта
+                // Сохраняем зашифрованные данные
                 lastEncryptedData = encryptedData;
                 
                 // Преобразование в hex для отображения
@@ -1211,6 +1222,7 @@
             document.getElementById('initStatus').style.color = '';
             lastOperationResult = null;
             lastEncryptedData = null;
+            lastPlaintext = null;
         }
         
         function switchTab(tabName) {
@@ -1365,20 +1377,21 @@
         }
         
         async function runAvalancheTest() {
-            if (!cipherInstance || !lastOperationResult) {
-                alert('Сначала выполните шифрование');
+            if (!cipherInstance) {
+                alert('Сначала инициализируйте шифр');
+                return;
+            }
+            
+            if (!lastPlaintext) {
+                alert('Сначала выполните шифрование данных');
                 return;
             }
             
             try {
-                const mode = document.getElementById('operationMode').value;
                 const analysisResults = document.getElementById('analysisResults');
                 analysisResults.innerHTML = '<div class="test-item">Выполняется тест лавинного эффекта...</div>';
                 
-                // Для теста лавинного эффекта используем только данные (без IV)
-                const dataToTest = mode === 'ecb' ? lastOperationResult : lastOperationResult.slice(16);
-                
-                const avalancheResult = await runAvalancheTestInternal(cipherInstance, dataToTest, mode);
+                const avalancheResult = await runAvalancheTestInternal();
                 
                 analysisResults.innerHTML = '';
                 
