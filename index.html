@@ -366,6 +366,32 @@
             width: auto;
             margin-right: 10px;
         }
+
+        .diffusion-controls {
+            background: var(--bg-tertiary);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .diffusion-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .diffusion-enabled {
+            background: var(--success);
+            color: white;
+        }
+        
+        .diffusion-disabled {
+            background: var(--danger);
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -418,6 +444,21 @@
                     <div class="checkbox-group">
                         <input type="checkbox" id="mixColumnsCheckbox">
                         <label for="mixColumnsCheckbox">Использовать MixColumns (дополнительная диффузия)</label>
+                    </div>
+
+                    <div class="diffusion-controls">
+                        <h3>🔀 Режим усиленной диффузии</h3>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="diffusionModeCheckbox" onchange="toggleDiffusionMode()">
+                            <label for="diffusionModeCheckbox">Включить динамический выбор групп омофонов</label>
+                            <span id="diffusionStatus" class="diffusion-status diffusion-disabled">ВЫКЛ</span>
+                        </div>
+                        
+                        <div class="input-group" id="diffusionKeyGroup" style="display: none;">
+                            <label for="diffusionKeyInput">Ключ диффузии (опционально):</label>
+                            <input type="number" id="diffusionKeyInput" min="0" max="255" value="42" placeholder="0-255">
+                            <small>Используется для дополнительной вариативности</small>
+                        </div>
                     </div>
                     
                     <button onclick="initializeCipher()" class="warning">Инициализировать шифр</button>
@@ -599,6 +640,34 @@
                 this.encryptionKey = null;
                 this.initializationVector = null;
                 this.useMixColumns = false;
+                this.diffusionMode = false;
+                this.diffusionKey = 0;
+            }
+            
+            // Установка режима диффузии
+            setDiffusionMode(enabled, key = 0) {
+                this.diffusionMode = enabled;
+                this.diffusionKey = key;
+            }
+            
+            // Расчет динамической группы
+            calculateGroup(originalByte, position, totalLength) {
+                if (!this.diffusionMode) {
+                    return originalByte;
+                }
+                
+                // Формула динамического выбора группы
+                return (originalByte + position + this.diffusionKey + Math.floor((position * totalLength) / 256)) % 256;
+            }
+            
+            // Обратный расчет
+            reverseGroup(group, position, totalLength) {
+                if (!this.diffusionMode) {
+                    return group;
+                }
+                
+                // Обратная формула
+                return (group - position - this.diffusionKey - Math.floor((position * totalLength) / 256) + 768) % 256;
             }
             
             // Инициализация шифра с ключом
@@ -610,7 +679,7 @@
                     const encoder = new TextEncoder();
                     const passphraseData = encoder.encode(passphrase);
                     
-                    // Используем фиксированную соль для детерминированности (по вашему требованию)
+                    // Используем фиксированную соль для детерминированности
                     const salt = await crypto.subtle.digest('SHA-256', passphraseData);
                     
                     const keyMaterial = await crypto.subtle.importKey(
@@ -644,7 +713,7 @@
                 }
             }
             
-            // Генерация S-Box на основе ключа (улучшенная версия)
+            // Генерация S-Box на основе ключа
             async generateSBox() {
                 try {
                     const encoder = new TextEncoder();
@@ -778,7 +847,7 @@
                 return result;
             }
             
-            // Применение MixColumns к данным (если активировано)
+            // Применение MixColumns к данным
             applyMixColumnsIfNeeded(data, encrypt = true) {
                 if (!this.useMixColumns) return data;
                 
@@ -820,9 +889,12 @@
                             byteToEncrypt ^= previousBlock[i % 16];
                         }
                         
+                        // Динамический выбор группы омофонов
+                        const group = this.calculateGroup(byteToEncrypt, i, plaintextBytes.length);
+                        
                         // Случайный выбор омофона из S-Box
                         const randomIndex = crypto.getRandomValues(new Uint8Array(1))[0];
-                        const homophone = this.sBox[byteToEncrypt][randomIndex];
+                        const homophone = this.sBox[group][randomIndex];
                         
                         ciphertext[i] = homophone;
                         
@@ -835,12 +907,10 @@
                     // Подготовка итогового результата
                     let result;
                     if (mode === 'ecb') {
-                        // Для ECB не добавляем IV
                         result = new Uint8Array(ciphertext.length * 2);
                         const ciphertextBytes = new Uint8Array(ciphertext.buffer);
                         result.set(ciphertextBytes, 0);
                     } else {
-                        // Для CBC и NoDiffusion добавляем IV
                         result = new Uint8Array(16 + ciphertext.length * 2);
                         result.set(this.initializationVector, 0);
                         const ciphertextBytes = new Uint8Array(ciphertext.buffer);
@@ -866,14 +936,12 @@
                     let iv, encryptedData;
                     
                     if (mode === 'ecb') {
-                        // Для ECB нет IV
                         if (ciphertext.length % 2 !== 0) {
                             throw new Error('Неверная длина зашифрованных данных');
                         }
-                        iv = new Uint8Array(16).fill(0); // Пустой IV для ECB
+                        iv = new Uint8Array(16).fill(0);
                         encryptedData = ciphertext;
                     } else {
-                        // Для CBC и NoDiffusion извлекаем IV из начала данных
                         if (ciphertext.length < 16) {
                             throw new Error('Неверный формат зашифрованных данных');
                         }
@@ -881,7 +949,6 @@
                         encryptedData = ciphertext.slice(16);
                     }
                     
-                    // Преобразование в Uint16Array для обработки омофонов
                     if (encryptedData.length % 2 !== 0) {
                         throw new Error('Неверная длина зашифрованных данных');
                     }
@@ -899,7 +966,11 @@
                             throw new Error(`Неверный омофон в позиции ${i}: ${homophone}`);
                         }
                         
-                        let decryptedByte = this.inverseSBox.get(homophone);
+                        // Находим группу омофона
+                        const homophoneGroup = this.findGroupForHomophone(homophone);
+                        
+                        // Восстанавливаем оригинальный байт
+                        let decryptedByte = this.reverseGroup(homophoneGroup, i, homophones.length);
                         
                         // Применение выбранного режима работы
                         if (mode === 'cbc') {
@@ -922,7 +993,18 @@
                 }
             }
             
-            // Обновление блока диффузии (по вашему примеру)
+            // Вспомогательный метод для поиска группы омофона
+            findGroupForHomophone(homophone) {
+                // Ищем, для какого байта этот омофон является омофоном
+                for (let group = 0; group < 256; group++) {
+                    if (this.sBox[group].includes(homophone)) {
+                        return group;
+                    }
+                }
+                throw new Error(`Не удалось найти группу для омофона: ${homophone}`);
+            }
+            
+            // Обновление блока диффузии
             updateDiffusionBlock(block, homophone) {
                 const newBlock = new Uint8Array(16);
                 const homophoneBytes = new Uint8Array([
@@ -949,17 +1031,14 @@
                     distribution: {}
                 };
                 
-                // Анализ распределения омофонов
                 for (let i = 0; i < 256; i++) {
                     for (let j = 0; j < 256; j++) {
                         const homophone = this.sBox[i][j];
                         properties.uniqueHomophones.add(homophone);
                         
-                        // Статистика по старшим байтам
                         const highByte = (homophone >> 8) & 0xFF;
                         properties.byteCoverage[highByte]++;
                         
-                        // Распределение значений
                         if (!properties.distribution[homophone]) {
                             properties.distribution[homophone] = 0;
                         }
@@ -976,7 +1055,7 @@
             // Расчет равномерности распределения
             calculateUniformity(distribution) {
                 const values = Object.values(distribution);
-                const expected = 256; // Каждое значение должно встречаться 256 раз в идеале
+                const expected = 256;
                 
                 let chiSquare = 0;
                 for (const count of values) {
@@ -987,7 +1066,174 @@
             }
         }
         
-        // Вспомогательные функции для анализа
+        // Функции для управления режимом диффузии
+        function toggleDiffusionMode() {
+            const diffusionCheckbox = document.getElementById('diffusionModeCheckbox');
+            const diffusionKeyGroup = document.getElementById('diffusionKeyGroup');
+            const diffusionStatus = document.getElementById('diffusionStatus');
+            
+            if (diffusionCheckbox.checked) {
+                diffusionKeyGroup.style.display = 'block';
+                diffusionStatus.textContent = 'ВКЛ';
+                diffusionStatus.className = 'diffusion-status diffusion-enabled';
+            } else {
+                diffusionKeyGroup.style.display = 'none';
+                diffusionStatus.textContent = 'ВЫКЛ';
+                diffusionStatus.className = 'diffusion-status diffusion-disabled';
+            }
+        }
+        
+        // Инициализация шифра
+        async function initializeCipher() {
+            const key = document.getElementById('keyInput').value;
+            const confirmation = document.getElementById('keyConfirmation').value;
+            const iterations = parseInt(document.getElementById('pbkdf2Iterations').value);
+            const useMixColumns = document.getElementById('mixColumnsCheckbox').checked;
+            const diffusionMode = document.getElementById('diffusionModeCheckbox').checked;
+            const diffusionKey = parseInt(document.getElementById('diffusionKeyInput').value) || 0;
+            
+            if (key !== confirmation) {
+                alert('Ключ и подтверждение не совпадают');
+                return;
+            }
+            
+            if (key.length < 12) {
+                alert('Ключ должен содержать至少 12 символов');
+                return;
+            }
+            
+            try {
+                document.getElementById('initStatus').textContent = 'Инициализация...';
+                
+                cipherInstance = new ProfessionalHomophonicCipher();
+                await cipherInstance.initializeWithKey(key, iterations, useMixColumns);
+                
+                // Устанавливаем режим диффузии
+                cipherInstance.setDiffusionMode(diffusionMode, diffusionKey);
+                
+                let statusText = 'Шифр успешно инициализирован';
+                if (useMixColumns) statusText += ' (с MixColumns)';
+                if (diffusionMode) statusText += ' (с режимом диффузии)';
+                
+                document.getElementById('initStatus').textContent = statusText;
+                document.getElementById('initStatus').style.color = '#3fb950';
+                
+            } catch (error) {
+                document.getElementById('initStatus').textContent = 'Ошибка: ' + error.message;
+                document.getElementById('initStatus').style.color = '#f85149';
+            }
+        }
+        
+        // Шифрование данных
+        async function encryptData() {
+            if (!cipherInstance) {
+                alert('Сначала инициализируйте шифр');
+                return;
+            }
+            
+            const inputText = document.getElementById('inputData').value;
+            if (!inputText) {
+                alert('Введите данные для шифрования');
+                return;
+            }
+            
+            const mode = document.getElementById('operationMode').value;
+            
+            try {
+                const encryptedData = await cipherInstance.encrypt(inputText, mode);
+                
+                lastEncryptedData = encryptedData;
+                
+                const hexResult = Array.from(encryptedData).map(b => 
+                    b.toString(16).padStart(2, '0')).join(' ');
+                
+                document.getElementById('outputData').textContent = hexResult;
+                lastOperationResult = encryptedData;
+                
+                let info = `Режим: ${mode.toUpperCase()}\n` +
+                             `Размер данных: ${inputText.length} байт\n` +
+                             `Размер результата: ${encryptedData.length} байт\n` +
+                             `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}\n` +
+                             `Диффузия: ${cipherInstance.diffusionMode ? 'Включена' : 'Выключена'}`;
+                
+                if (mode !== 'ecb') {
+                    info += `\nIV: ${Array.from(encryptedData.slice(0, 16)).map(b => 
+                                 b.toString(16).padStart(2, '0')).join(' ')}`;
+                }
+                
+                document.getElementById('encryptionInfo').textContent = info;
+                
+            } catch (error) {
+                document.getElementById('outputData').textContent = 'Ошибка: ' + error.message;
+            }
+        }
+        
+        // Дешифрование данных
+        async function decryptData() {
+            if (!cipherInstance) {
+                alert('Сначала инициализируйте шифр');
+                return;
+            }
+            
+            const inputText = document.getElementById('inputData').value;
+            if (!inputText) {
+                alert('Введите данные для дешифрования');
+                return;
+            }
+            
+            const mode = document.getElementById('operationMode').value;
+            
+            try {
+                const hexValues = inputText.trim().split(/\s+/);
+                const byteArray = new Uint8Array(hexValues.map(h => parseInt(h, 16)));
+                
+                const decryptedText = await cipherInstance.decrypt(byteArray, mode);
+                
+                document.getElementById('outputData').textContent = decryptedText;
+                
+                const encoder = new TextEncoder();
+                lastOperationResult = encoder.encode(decryptedText);
+                
+                document.getElementById('encryptionInfo').textContent = 
+                    `Режим: ${mode.toUpperCase()}\n` +
+                    `Размер данных: ${byteArray.length} байт\n` +
+                    `Размер результата: ${decryptedText.length} символов\n` +
+                    `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}\n` +
+                    `Диффузия: ${cipherInstance.diffusionMode ? 'Включена' : 'Выключена'}`;
+                
+            } catch (error) {
+                document.getElementById('outputData').textContent = 'Ошибка: ' + error.message;
+            }
+        }
+        
+        // Очистка
+        function clearAll() {
+            document.getElementById('inputData').value = '';
+            document.getElementById('outputData').textContent = '';
+            document.getElementById('encryptionInfo').textContent = '';
+            document.getElementById('initStatus').textContent = 'Шифр не инициализирован';
+            document.getElementById('initStatus').style.color = '';
+            lastOperationResult = null;
+            lastEncryptedData = null;
+            lastPlaintext = null;
+        }
+        
+        // Переключение вкладок
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Функции анализа (оставлены без изменений)
         function calculateShannonEntropy(data) {
             if (!data || data.length === 0) return 0;
             
@@ -1036,25 +1282,20 @@
                 chiSquare += Math.pow(frequencies[i] - expected, 2) / expected;
             }
             
-            // Более точное вычисление p-значения с использованием аппроксимации
             const pValue = chiSquarePValue(chiSquare, 255);
             
             return { chiSquare, pValue };
         }
         
-        // Функция для вычисления p-значения для распределения хи-квадрат
         function chiSquarePValue(chi2, df) {
             if (df <= 0) return 0;
             if (chi2 <= 0) return 1;
             
-            // Аппроксимация для больших степеней свободы (df > 30)
             const z = (Math.sqrt(2 * chi2) - Math.sqrt(2 * df - 1));
             return 1 - (1 + erf(z / Math.sqrt(2))) / 2;
         }
         
-        // Функция ошибок (error function)
         function erf(x) {
-            // Approximation from Abramowitz and Stegun
             const a1 = 0.254829592;
             const a2 = -0.284496736;
             const a3 = 1.421413741;
@@ -1071,19 +1312,16 @@
             return sign * y;
         }
         
-        // Функция для расчета числа π методом Монте-Карло
         function calculatePiEstimate(data) {
             if (!data || data.length < 2) return 0;
             
             let inCircle = 0;
             let totalPairs = 0;
             
-            // Обрабатываем данные парами байтов
             for (let i = 0; i < data.length - 1; i += 2) {
-                const x = data[i] / 255.0;       // Нормализуем к [0, 1]
-                const y = data[i + 1] / 255.0;   // Нормализуем к [0, 1]
+                const x = data[i] / 255.0;
+                const y = data[i + 1] / 255.0;
                 
-                // Проверяем, попадает ли точка в единичную окружность
                 if (x * x + y * y <= 1.0) {
                     inCircle++;
                 }
@@ -1092,16 +1330,14 @@
             
             if (totalPairs === 0) return 0;
             
-            // Оценка π: (4 * точки в круге) / общее количество точек
             return (4.0 * inCircle) / totalPairs;
         }
         
-        // Функция для подсчета runs (серий)
         function calculateRuns(data) {
             if (!data || data.length < 2) return 0;
             
             let runs = 1;
-            let previous = data[0] >= 128; // Преобразуем в бинарную последовательность
+            let previous = data[0] >= 128;
             
             for (let i = 1; i < data.length; i++) {
                 const current = data[i] >= 128;
@@ -1114,7 +1350,6 @@
             return runs;
         }
         
-        // Функция для вычисления автокорреляции
         function calculateAutocorrelation(data, lag = 1) {
             if (!data || data.length <= lag) return 0;
             
@@ -1130,7 +1365,6 @@
             return numerator / denominator;
         }
         
-        // Функция для частотного анализа
         function frequencyAnalysis(data) {
             if (!data || data.length === 0) return null;
             
@@ -1142,7 +1376,6 @@
             return frequencies;
         }
         
-        // ПРАВИЛЬНАЯ функция для теста лавинного эффекта
         async function runAvalancheTestInternal() {
             if (!cipherInstance || !lastPlaintext) {
                 throw new Error("Сначала выполните шифрование данных");
@@ -1151,34 +1384,26 @@
             const mode = document.getElementById('operationMode').value;
             const encoder = new TextEncoder();
             
-            // Создаем копию оригинальных данных
             const originalData = new Uint8Array(lastPlaintext);
-            
-            // Шифруем оригинальные данные
             const originalText = new TextDecoder().decode(originalData);
             const originalEncrypted = await cipherInstance.encrypt(originalText, mode);
             
-            // Создаем модифицированные данные (меняем один бит)
             const modifiedData = new Uint8Array(originalData);
-            modifiedData[0] ^= 0x01; // Изменяем первый бит первого байта
+            modifiedData[0] ^= 0x01;
             
-            // Шифруем модифицированные данные
             const modifiedText = new TextDecoder().decode(modifiedData);
             const modifiedEncrypted = await cipherInstance.encrypt(modifiedText, mode);
             
-            // Определяем какие части сравнивать (исключаем IV для режимов с IV)
             let originalToCompare, modifiedToCompare;
             
             if (mode === 'ecb') {
                 originalToCompare = originalEncrypted;
                 modifiedToCompare = modifiedEncrypted;
             } else {
-                // Для режимов с IV сравниваем только зашифрованные данные (без IV)
                 originalToCompare = originalEncrypted.slice(16);
                 modifiedToCompare = modifiedEncrypted.slice(16);
             }
             
-            // Сравниваем результаты шифрования
             let totalChanges = 0;
             let totalBits = originalToCompare.length * 8;
             
@@ -1198,7 +1423,6 @@
             };
         }
         
-        // Подсчет количества отличающихся битов между двумя байтами
         function countBitDifferences(a, b) {
             let diff = a ^ b;
             let count = 0;
@@ -1211,154 +1435,6 @@
             return count;
         }
         
-        // Функции для работы с интерфейсом
-        async function initializeCipher() {
-            const key = document.getElementById('keyInput').value;
-            const confirmation = document.getElementById('keyConfirmation').value;
-            const iterations = parseInt(document.getElementById('pbkdf2Iterations').value);
-            const useMixColumns = document.getElementById('mixColumnsCheckbox').checked;
-            
-            if (key !== confirmation) {
-                alert('Ключ и подтверждение не совпадают');
-                return;
-            }
-            
-            if (key.length < 12) {
-                alert('Ключ должен содержать至少 12 символов');
-                return;
-            }
-            
-            try {
-                document.getElementById('initStatus').textContent = 'Инициализация...';
-                
-                cipherInstance = new ProfessionalHomophonicCipher();
-                await cipherInstance.initializeWithKey(key, iterations, useMixColumns);
-                
-                document.getElementById('initStatus').textContent = 'Шифр успешно инициализирован' + 
-                    (useMixColumns ? ' (с MixColumns)' : '');
-                document.getElementById('initStatus').style.color = '#3fb950';
-                
-            } catch (error) {
-                document.getElementById('initStatus').textContent = 'Ошибка: ' + error.message;
-                document.getElementById('initStatus').style.color = '#f85149';
-            }
-        }
-        
-        async function encryptData() {
-            if (!cipherInstance) {
-                alert('Сначала инициализируйте шифр');
-                return;
-            }
-            
-            const inputText = document.getElementById('inputData').value;
-            if (!inputText) {
-                alert('Введите данные для шифрования');
-                return;
-            }
-            
-            const mode = document.getElementById('operationMode').value;
-            
-            try {
-                const encryptedData = await cipherInstance.encrypt(inputText, mode);
-                
-                // Сохраняем зашифрованные данные
-                lastEncryptedData = encryptedData;
-                
-                // Преобразование в hex для отображения
-                const hexResult = Array.from(encryptedData).map(b => 
-                    b.toString(16).padStart(2, '0')).join(' ');
-                
-                document.getElementById('outputData').textContent = hexResult;
-                
-                // Сохранение результата для последующего анализа
-                lastOperationResult = encryptedData;
-                
-                // Обновление информации о шифровании
-                let info = `Режим: ${mode.toUpperCase()}\n` +
-                             `Размер данных: ${inputText.length} байт\n` +
-                             `Размер результата: ${encryptedData.length} байт\n` +
-                             `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}\n`;
-                
-                if (mode !== 'ecb') {
-                    info += `IV: ${Array.from(encryptedData.slice(0, 16)).map(b => 
-                                 b.toString(16).padStart(2, '0')).join(' ')}`;
-                }
-                
-                document.getElementById('encryptionInfo').textContent = info;
-                
-            } catch (error) {
-                document.getElementById('outputData').textContent = 'Ошибка: ' + error.message;
-            }
-        }
-        
-        async function decryptData() {
-            if (!cipherInstance) {
-                alert('Сначала инициализируйте шифр');
-                return;
-            }
-            
-            const inputText = document.getElementById('inputData').value;
-            if (!inputText) {
-                alert('Введите данные для дешифрования');
-                return;
-            }
-            
-            const mode = document.getElementById('operationMode').value;
-            
-            try {
-                // Преобразование hex-строки обратно в байты
-                const hexValues = inputText.trim().split(/\s+/);
-                const byteArray = new Uint8Array(hexValues.map(h => parseInt(h, 16)));
-                
-                const decryptedText = await cipherInstance.decrypt(byteArray, mode);
-                
-                document.getElementById('outputData').textContent = decryptedText;
-                
-                // Сохранение результата для последующего анализа
-                const encoder = new TextEncoder();
-                lastOperationResult = encoder.encode(decryptedText);
-                
-                // Обновление информации о дешифровании
-                document.getElementById('encryptionInfo').textContent = 
-                    `Режим: ${mode.toUpperCase()}\n` +
-                    `Размер данных: ${byteArray.length} байт\n` +
-                    `Размер результата: ${decryptedText.length} символов\n` +
-                    `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}`;
-                
-            } catch (error) {
-                document.getElementById('outputData').textContent = 'Ошибка: ' + error.message;
-            }
-        }
-        
-        function clearAll() {
-            document.getElementById('inputData').value = '';
-            document.getElementById('outputData').textContent = '';
-            document.getElementById('encryptionInfo').textContent = '';
-            document.getElementById('initStatus').textContent = 'Шифр не инициализирован';
-            document.getElementById('initStatus').style.color = '';
-            lastOperationResult = null;
-            lastEncryptedData = null;
-            lastPlaintext = null;
-        }
-        
-        function switchTab(tabName) {
-            // Скрыть все вкладки
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            // Показать выбранную вкладку
-            document.getElementById(tabName).classList.add('active');
-            
-            // Обновить активную кнопку вкладки
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            
-            event.currentTarget.classList.add('active');
-        }
-        
-        // Функции анализа
         function runEntropyAnalysis() {
             if (!lastOperationResult || lastOperationResult.length === 0) {
                 alert('Сначала выполните шифрование или дешифрование');
@@ -1374,7 +1450,6 @@
             document.getElementById('chiSquare').textContent = chiSquareResult.chiSquare.toFixed(2);
             document.getElementById('pValue').textContent = chiSquareResult.pValue.toFixed(6);
             
-            // Обновление результатов анализа
             const analysisResults = document.getElementById('analysisResults');
             analysisResults.innerHTML = '';
             
@@ -1419,7 +1494,6 @@
                 analysisResults.appendChild(desc);
             }
             
-            // Обновление заключения
             document.getElementById('frequencyResistance').textContent = 
                 shannonEntropy > 7.9 ? 'Высокая' : 'Средняя';
             document.getElementById('entropyEfficiency').textContent = 
@@ -1438,7 +1512,6 @@
             const analysisResults = document.getElementById('analysisResults');
             analysisResults.innerHTML = '';
             
-            // Создаем гистограмму
             const histogram = document.getElementById('byteHistogram');
             histogram.innerHTML = '';
             
@@ -1447,7 +1520,6 @@
             
             const maxFreq = Math.max(...frequencies);
             
-            // Заполняем гистограмму
             for (let i = 0; i < 256; i++) {
                 const bar = document.createElement('div');
                 bar.className = 'bar';
@@ -1456,7 +1528,6 @@
                 histogram.appendChild(bar);
             }
             
-            // Заполняем распределение байтов
             for (let i = 0; i < 256; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'byte-cell';
@@ -1474,7 +1545,6 @@
                 distribution.appendChild(cell);
             }
             
-            // Добавляем информацию о тесте
             const expected = lastOperationResult.length / 256;
             const uniformity = frequencies.reduce((sum, freq) => sum + Math.pow(freq - expected, 2), 0) / expected;
             
@@ -1533,7 +1603,6 @@
                 `;
                 analysisResults.appendChild(details);
                 
-                // Обновление заключения
                 document.getElementById('avalancheEffect').textContent = 
                     avalancheResult.avalancheEffect > 45 && avalancheResult.avalancheEffect < 55 ? 
                     'Хороший' : 'Слабый';
@@ -1642,7 +1711,6 @@
                 sboxProperties.appendChild(item);
             }
             
-            // Обновление заключения
             document.getElementById('frequencyResistance').textContent = 
                 properties.uniformityScore < 500 ? 'Высокая' : 'Средняя';
             document.getElementById('differentialResistance').textContent = 
@@ -1660,7 +1728,6 @@
             const sboxTable = document.getElementById('sboxTable');
             sboxTable.innerHTML = '';
             
-            // Заголовок
             const emptyHeader = document.createElement('div');
             emptyHeader.className = 'sbox-header';
             sboxTable.appendChild(emptyHeader);
@@ -1672,7 +1739,6 @@
                 sboxTable.appendChild(header);
             }
             
-            // Данные S-Box (первые 16x16 значений)
             for (let i = 0; i < 16; i++) {
                 const rowHeader = document.createElement('div');
                 rowHeader.className = 'sbox-header';
@@ -1684,7 +1750,7 @@
                     cell.className = 'sbox-cell';
                     
                     const byteValue = i * 16 + j;
-                    const homophone = cipherInstance.sBox[byteValue][0]; // Первый омофон для ячейки
+                    const homophone = cipherInstance.sBox[byteValue][0];
                     
                     cell.textContent = homophone.toString(16).padStart(4, '0');
                     cell.title = `S-Box[${byteValue}][0] = ${homophone}`;
