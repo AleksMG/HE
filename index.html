@@ -355,6 +355,17 @@
             background: var(--accent);
             flex: 1;
         }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 10px;
+        }
     </style>
 </head>
 <body>
@@ -402,6 +413,11 @@
                             <option value="ecb">ECB</option>
                             <option value="nodiffusion">Без диффузии</option>
                         </select>
+                    </div>
+                    
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="mixColumnsCheckbox">
+                        <label for="mixColumnsCheckbox">Использовать MixColumns (дополнительная диффузия)</label>
                     </div>
                     
                     <button onclick="initializeCipher()" class="warning">Инициализировать шифр</button>
@@ -560,6 +576,21 @@
         let lastEncryptedData = null;
         let lastPlaintext = null;
         
+        // Константы для MixColumns
+        const MIX_COLUMNS_MATRIX = [
+            [0x02, 0x03, 0x01, 0x01],
+            [0x01, 0x02, 0x03, 0x01],
+            [0x01, 0x01, 0x02, 0x03],
+            [0x03, 0x01, 0x01, 0x02]
+        ];
+        
+        const INV_MIX_COLUMNS_MATRIX = [
+            [0x0e, 0x0b, 0x0d, 0x09],
+            [0x09, 0x0e, 0x0b, 0x0d],
+            [0x0d, 0x09, 0x0e, 0x0b],
+            [0x0b, 0x0d, 0x09, 0x0e]
+        ];
+        
         // Класс для профессиональной гомофонической криптосистемы
         class ProfessionalHomophonicCipher {
             constructor() {
@@ -567,11 +598,14 @@
                 this.inverseSBox = null;
                 this.encryptionKey = null;
                 this.initializationVector = null;
+                this.useMixColumns = false;
             }
             
             // Инициализация шифра с ключом
-            async initializeWithKey(passphrase, iterations = 500000) {
+            async initializeWithKey(passphrase, iterations = 500000, useMixColumns = false) {
                 try {
+                    this.useMixColumns = useMixColumns;
+                    
                     // Генерация ключа с использованием PBKDF2
                     const encoder = new TextEncoder();
                     const passphraseData = encoder.encode(passphrase);
@@ -688,6 +722,78 @@
                 }
             }
             
+            // Умножение в поле Галуа GF(2^8)
+            gmul(a, b) {
+                let p = 0;
+                let counter;
+                let hi_bit_set;
+                
+                for (counter = 0; counter < 8; counter++) {
+                    if (b & 1) {
+                        p ^= a;
+                    }
+                    
+                    hi_bit_set = a & 0x80;
+                    a <<= 1;
+                    if (hi_bit_set) {
+                        a ^= 0x1b; // x^8 + x^4 + x^3 + x + 1
+                    }
+                    b >>= 1;
+                }
+                
+                return p & 0xFF;
+            }
+            
+            // Применение MixColumns к блоку (4x4 байта)
+            mixColumns(block) {
+                const result = new Uint8Array(16);
+                
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        result[i * 4 + j] = 
+                            this.gmul(MIX_COLUMNS_MATRIX[j][0], block[i * 4]) ^
+                            this.gmul(MIX_COLUMNS_MATRIX[j][1], block[i * 4 + 1]) ^
+                            this.gmul(MIX_COLUMNS_MATRIX[j][2], block[i * 4 + 2]) ^
+                            this.gmul(MIX_COLUMNS_MATRIX[j][3], block[i * 4 + 3]);
+                    }
+                }
+                
+                return result;
+            }
+            
+            // Обратное преобразование MixColumns
+            invMixColumns(block) {
+                const result = new Uint8Array(16);
+                
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        result[i * 4 + j] = 
+                            this.gmul(INV_MIX_COLUMNS_MATRIX[j][0], block[i * 4]) ^
+                            this.gmul(INV_MIX_COLUMNS_MATRIX[j][1], block[i * 4 + 1]) ^
+                            this.gmul(INV_MIX_COLUMNS_MATRIX[j][2], block[i * 4 + 2]) ^
+                            this.gmul(INV_MIX_COLUMNS_MATRIX[j][3], block[i * 4 + 3]);
+                    }
+                }
+                
+                return result;
+            }
+            
+            // Применение MixColumns к данным (если активировано)
+            applyMixColumnsIfNeeded(data, encrypt = true) {
+                if (!this.useMixColumns) return data;
+                
+                const result = new Uint8Array(data.length);
+                const blockSize = 16;
+                
+                for (let i = 0; i < data.length; i += blockSize) {
+                    const block = data.slice(i, i + blockSize);
+                    const processedBlock = encrypt ? this.mixColumns(block) : this.invMixColumns(block);
+                    result.set(processedBlock, i);
+                }
+                
+                return result;
+            }
+            
             // Шифрование данных
             async encrypt(plaintext, mode = 'cbc') {
                 try {
@@ -741,6 +847,9 @@
                         result.set(ciphertextBytes, 16);
                     }
                     
+                    // Применяем MixColumns если активировано
+                    result = this.applyMixColumnsIfNeeded(result, true);
+                    
                     return result;
                 } catch (error) {
                     console.error('Ошибка шифрования:', error);
@@ -751,6 +860,9 @@
             // Дешифрование данных
             async decrypt(ciphertext, mode = 'cbc') {
                 try {
+                    // Применяем обратное MixColumns если активировано
+                    ciphertext = this.applyMixColumnsIfNeeded(ciphertext, false);
+                    
                     let iv, encryptedData;
                     
                     if (mode === 'ecb') {
@@ -1104,6 +1216,7 @@
             const key = document.getElementById('keyInput').value;
             const confirmation = document.getElementById('keyConfirmation').value;
             const iterations = parseInt(document.getElementById('pbkdf2Iterations').value);
+            const useMixColumns = document.getElementById('mixColumnsCheckbox').checked;
             
             if (key !== confirmation) {
                 alert('Ключ и подтверждение не совпадают');
@@ -1119,9 +1232,10 @@
                 document.getElementById('initStatus').textContent = 'Инициализация...';
                 
                 cipherInstance = new ProfessionalHomophonicCipher();
-                await cipherInstance.initializeWithKey(key, iterations);
+                await cipherInstance.initializeWithKey(key, iterations, useMixColumns);
                 
-                document.getElementById('initStatus').textContent = 'Шифр успешно инициализирован';
+                document.getElementById('initStatus').textContent = 'Шифр успешно инициализирован' + 
+                    (useMixColumns ? ' (с MixColumns)' : '');
                 document.getElementById('initStatus').style.color = '#3fb950';
                 
             } catch (error) {
@@ -1162,7 +1276,8 @@
                 // Обновление информации о шифровании
                 let info = `Режим: ${mode.toUpperCase()}\n` +
                              `Размер данных: ${inputText.length} байт\n` +
-                             `Размер результата: ${encryptedData.length} байт\n`;
+                             `Размер результата: ${encryptedData.length} байт\n` +
+                             `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}\n`;
                 
                 if (mode !== 'ecb') {
                     info += `IV: ${Array.from(encryptedData.slice(0, 16)).map(b => 
@@ -1207,7 +1322,8 @@
                 document.getElementById('encryptionInfo').textContent = 
                     `Режим: ${mode.toUpperCase()}\n` +
                     `Размер данных: ${byteArray.length} байт\n` +
-                    `Размер результата: ${decryptedText.length} символов`;
+                    `Размер результата: ${decryptedText.length} символов\n` +
+                    `MixColumns: ${cipherInstance.useMixColumns ? 'Да' : 'Нет'}`;
                 
             } catch (error) {
                 document.getElementById('outputData').textContent = 'Ошибка: ' + error.message;
@@ -1579,4 +1695,4 @@
         }
     </script>
 </body>
-    </html>
+</html>
